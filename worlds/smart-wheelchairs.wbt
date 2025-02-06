@@ -7,12 +7,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/devices/robotis/protos/RobotisLds01.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.2660738322762253 -0.42202659768133916 -0.8666592563558969 5.026856522377473
-  position -5.896614516331346 -12.55538857453196 7.882916077992036
+  orientation -0.5229848366132647 0.5235012677103195 0.6726316104512821 1.9556643114824723
+  position -0.6003328504423426 -6.663626531060955 12.484926707153884
 }
 TexturedBackground {
 }
@@ -25,15 +26,103 @@ Floor {
   }
 }
 TurtleBot3Burger {
-  translation -4.55404 -4.40694 -0.000220309
-  rotation 0.0031473987068003795 -0.0031593056583703615 0.99999005628513 1.5708005084891943
-  controller "turtlebot3_ostacle_avoidance"
+  hidden position_0_0 63.99626774786699
+  hidden position_0_1 63.9962676041664
+  hidden position_0_2 -439.1396080461259
+  hidden position2_0_2 -0.00806620861262524
+  hidden position3_0_2 -0.002651898693937229
+  hidden rotation_8 0 -1 0 0.40638132392887394
+  hidden rotation_9 -0.9794270853055522 1.2794321412282246e-06 -0.20179837602972328 3.141588766674365
+  hidden rotation_10 0.9999197425427436 -0.010013883036732046 -0.007760838857994329 0.6834248311131023
+  translation -4.29746 -4.71155 -0.000248083
+  rotation 0.0023359241882348375 -0.0023472766154388302 0.9999945168603064 1.5701601670273246
+  controller "robot-controller"
+  supervisor TRUE
+  extensionSlot [
+    RobotisLds01 {
+      noise 0.002
+    }
+  ]
 }
 TurtleBot3Burger {
-  translation -4.0461 -4.4174 -0.000220309
-  rotation -0.0031593301777645935 -0.003147380177092208 -0.9999900562659855 -1.5708053071795867
+  hidden position_0_0 63.99626774786699
+  hidden position_0_1 63.9962676041664
+  hidden position_0_2 -439.1396080461259
+  hidden position2_0_2 -0.00806620861262524
+  hidden position3_0_2 -0.002651898693937229
+  hidden rotation_8 0 -1 0 0.40638132392887394
+  hidden rotation_9 -0.9794270853055522 1.2794321412413324e-06 -0.20179837602972328 3.141588766674365
+  hidden rotation_10 0.9999197425427436 -0.010013883036732046 -0.007760838857994329 0.6834248311131023
+  translation -2.78525 -4.7099 0
+  rotation 0.0023359241882348375 -0.0023472766154388302 0.9999945168603064 1.5701601670273246
   name "TurtleBot3Burger(1)"
-  controller "turtlebot3_ostacle_avoidance"
+  controller "robot-controller"
+  supervisor TRUE
+  extensionSlot [
+    RobotisLds01 {
+      noise 0.002
+    }
+  ]
+}
+TurtleBot3Burger {
+  hidden position_0_0 63.99626774786699
+  hidden position_0_1 63.9962676041664
+  hidden position_0_2 -439.1396080461259
+  hidden position2_0_2 -0.00806620861262524
+  hidden position3_0_2 -0.002651898693937229
+  hidden rotation_8 0 -1 0 0.40638132392887394
+  hidden rotation_9 -0.9794270853055522 1.279432141250477e-06 -0.20179837602972328 3.141588766674365
+  hidden rotation_10 0.9999197425427436 -0.010013883036732046 -0.007760838857994329 0.6834248311131023
+  translation -1.31027 -4.71485 0
+  rotation 0.0023359241882348375 -0.0023472766154388302 0.9999945168603064 1.5701601670273246
+  name "TurtleBot3Burger(2)"
+  controller "robot-controller"
+  supervisor TRUE
+  extensionSlot [
+    RobotisLds01 {
+      noise 0.002
+    }
+  ]
+}
+TurtleBot3Burger {
+  hidden position_0_0 63.99626774786699
+  hidden position_0_1 63.9962676041664
+  hidden position_0_2 -439.1396080461259
+  hidden position2_0_2 -0.00806620861262524
+  hidden position3_0_2 -0.002651898693937229
+  hidden rotation_8 0 -1 0 0.40638132392887394
+  hidden rotation_9 -0.9794270853055522 1.2794321412568566e-06 -0.20179837602972328 3.141588766674365
+  hidden rotation_10 0.9999197425427436 -0.010013883036732046 -0.007760838857994329 0.6834248311131023
+  translation 0.238411 -4.66552 0
+  rotation 0.0023359241882348375 -0.0023472766154388302 0.9999945168603064 1.5701601670273246
+  name "TurtleBot3Burger(3)"
+  controller "robot-controller"
+  supervisor TRUE
+  extensionSlot [
+    RobotisLds01 {
+      noise 0.002
+    }
+  ]
+}
+TurtleBot3Burger {
+  hidden position_0_0 63.99626774786699
+  hidden position_0_1 63.9962676041664
+  hidden position_0_2 -439.1396080461259
+  hidden position2_0_2 -0.00806620861262524
+  hidden position3_0_2 -0.002651898693937229
+  hidden rotation_8 0 -1 0 0.40638132392887394
+  hidden rotation_9 -0.9794270853055522 1.2794321412613073e-06 -0.20179837602972328 3.141588766674365
+  hidden rotation_10 0.9999197425427436 -0.010013883036732046 -0.007760838857994329 0.6834248311131023
+  translation 1.77446 -4.63678 0
+  rotation 0.0023359241882348375 -0.0023472766154388302 0.9999945168603064 1.5701601670273246
+  name "TurtleBot3Burger(4)"
+  controller "robot-controller"
+  supervisor TRUE
+  extensionSlot [
+    RobotisLds01 {
+      noise 0.002
+    }
+  ]
 }
 Wall {
   translation 0 5 0
