@@ -49,8 +49,13 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         self.bumper = self.getDevice("Bumper")
         self.bumper.enable(self.timestep)
 
+        self.init_pos = self.getSelf().getPosition()
+        print("Initial position", self.init_pos)
+
+        self.goal = [1e9, 2.2, 1e9]
+
         logging.basicConfig(
-            filename="Turtle0",
+            filename="logs/turtle0.log",
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
@@ -89,6 +94,13 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         self.wheels[1].setVelocity(r)
 
         super().step(self.timestep)
+
+        pos = self.getSelf().getPosition()
+        diff = pos[1] - self.init_pos[1]
+
+        if np.any(diff >= self.goal[1]):
+            print("Goal reached")
+            self.done = True
 
         if self.bumper.getValue() == 1:
             print("Collision detected")
