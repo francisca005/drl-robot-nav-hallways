@@ -172,3 +172,4 @@ cython_debug/
 
 # Webots
 worlds/.*
+logs/
