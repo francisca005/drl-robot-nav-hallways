@@ -8,7 +8,7 @@ import logging
 class CorridorNavigationEnv(Supervisor, gym.Env):
     def __init__(self):
         super().__init__()
-        self.timestep = int(self.getBasicTimeStep())
+        self.webots_timestep = int(self.getBasicTimeStep())
 
         """
         Define action and observation space.
@@ -28,10 +28,9 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             low=0, high=10, shape=(self.n_samples,), dtype=np.float32
         )
 
+        self.timestep = 0
         self.end_reward = 30
-
-        self.done = False
-        self.truncated = False
+        self.timelimit = 1000
 
         """
         Setup wheels and lidar devices.
@@ -44,12 +43,12 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             self.wheels.append(wheel)
 
         self.lidar = self.getDevice("Lidar")
-        self.lidar.enable(self.timestep)
+        self.lidar.enable(self.webots_timestep)
         self.lidar.enablePointCloud()
 
         self.robot = self.getSelf()
         self.bumper = self.getDevice("Bumper")
-        self.bumper.enable(self.timestep)
+        self.bumper.enable(self.webots_timestep)
 
         self.init_translation = self.robot.getField("translation").getSFVec3f()
         self.init_rotation = self.robot.getField("rotation").getSFRotation()
@@ -64,7 +63,7 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
 
     def reset(self, seed=None):
         print("Resetting environment")
-        self.done = False
+        self.timestep = 0
 
         self.robot.getField("translation").setSFVec3f(self.init_translation)
         self.robot.getField("rotation").setSFRotation(self.init_rotation)
@@ -73,7 +72,7 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             wheel.setVelocity(0)
 
         self.simulationResetPhysics()
-        super().step(self.timestep)
+        super().step(self.webots_timestep)
 
         return self.get_obs(), {}
 
@@ -81,15 +80,30 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         lidar_values = np.array(self.lidar.getRangeImage(), dtype=np.float32)
         return np.clip(lidar_values, 0, 10)
 
-    def calculate_reward(self, lidar_values, action):
-        return 0
+    def calculate_reward(self, lidar, action):
+        lidar = np.array(lidar, dtype=np.float32)
+
+        reward = -0.5  # incentive to move quicker
+        threshold = 0.75  # threshold for min distance to a wall to give negative reward
+
+        min_dist = np.min(lidar)
+        if min_dist <= threshold:
+            reward -= np.exp(-min_dist)
+
+        # TODO: consider (previous) action for reward
+
+        return reward
 
     def step(self, action):
+        self.timestep += 1
+        done = False
+        truncated = False
+
         l, r = self.num_to_action(action)
         self.wheels[0].setVelocity(l)
         self.wheels[1].setVelocity(r)
 
-        super().step(self.timestep)
+        super().step(self.webots_timestep)
 
         lidar_values = self.get_obs()
         reward = self.calculate_reward(lidar_values, action)
@@ -98,28 +112,36 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         diff = pos[1] - self.init_translation[1]
 
         if np.any(diff >= self.goal[1]):
-            print("Goal reached")
-            self.done = True
-            reward += self.end_reward
-
-        if self.bumper.getValue() == 1:
-            print("Bumper hit")
-            self.done = True
+            reward += self.end_reward + (self.timelimit - self.timestep)
+            done = True
+            print("Goal reached in", self.timestep, "steps with reward", reward)
+        elif self.bumper.getValue() == 1:
             reward -= self.end_reward
+            done = True
+            print(
+                "Episode terminated in",
+                self.timestep,
+                "steps due to collision with reward",
+                reward,
+            )
+        elif self.timestep >= self.timelimit:
+            reward -= self.end_reward
+            done = True
+            truncated = True
+            print(
+                "Episode terminated in",
+                self.timestep,
+                "steps due to time limit with reward",
+                reward,
+            )
 
-        # TODO: check truncated (time limit)
-        self.truncated = False
-
-        if self.done:
-            print("Episode done")
-
-        return lidar_values, reward, self.done, self.truncated, {}
+        return lidar_values, reward, done, truncated, {}
 
 
 def main():
     env = CorridorNavigationEnv()
     model = PPO("MlpPolicy", env, verbose=0, device="cpu")
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=200000)
 
 
 if __name__ == "__main__":
