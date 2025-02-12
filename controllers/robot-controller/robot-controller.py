@@ -28,6 +28,8 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             low=0, high=10, shape=(self.n_samples,), dtype=np.float32
         )
 
+        self.end_reward = 30
+
         self.done = False
         self.truncated = False
 
@@ -45,12 +47,12 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         self.lidar.enable(self.timestep)
         self.lidar.enablePointCloud()
 
-        self.robot = self.getFromDef("Turtle0")
+        self.robot = self.getSelf()
         self.bumper = self.getDevice("Bumper")
         self.bumper.enable(self.timestep)
 
-        self.init_pos = self.getSelf().getPosition()
-        print("Initial position", self.init_pos)
+        self.init_translation = self.robot.getField("translation").getSFVec3f()
+        self.init_rotation = self.robot.getField("rotation").getSFRotation()
 
         self.goal = [1e9, 2.2, 1e9]
 
@@ -60,22 +62,16 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
 
-        logging.info("env initialized")
-
     def reset(self, seed=None):
+        print("Resetting environment")
         self.done = False
 
-        # robot_node = self.getFromDef("Turtle0")
-        # if robot_node:
-        #     robot_translation = robot_node.getField("translation")
-        #     robot_rotation = robot_node.getField("rotation")
-        #     robot_translation.setSFVec3f([0.214, 0, 0])
-        #     robot_rotation.setSFRotation([0.0, 0.0, 1.0, 0])
+        self.robot.getField("translation").setSFVec3f(self.init_translation)
+        self.robot.getField("rotation").setSFRotation(self.init_rotation)
 
-        # for wheel in self.__wheels:
-        #     wheel.setVelocity(0)
+        for wheel in self.wheels:
+            wheel.setVelocity(0)
 
-        # Reset robot position
         self.simulationResetPhysics()
         super().step(self.timestep)
 
@@ -95,22 +91,27 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
 
         super().step(self.timestep)
 
-        pos = self.getSelf().getPosition()
-        diff = pos[1] - self.init_pos[1]
+        lidar_values = self.get_obs()
+        reward = self.calculate_reward(lidar_values, action)
+
+        pos = self.robot.getField("translation").getSFVec3f()
+        diff = pos[1] - self.init_translation[1]
 
         if np.any(diff >= self.goal[1]):
             print("Goal reached")
             self.done = True
+            reward += self.end_reward
 
         if self.bumper.getValue() == 1:
-            print("Collision detected")
-            logging.info("Collision detected")
+            print("Bumper hit")
+            self.done = True
+            reward -= self.end_reward
 
-        lidar_values = self.get_obs()
-        reward = self.calculate_reward(lidar_values, action)
-
-        self.done = False
+        # TODO: check truncated (time limit)
         self.truncated = False
+
+        if self.done:
+            print("Episode done")
 
         return lidar_values, reward, self.done, self.truncated, {}
 
@@ -118,18 +119,7 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
 def main():
     env = CorridorNavigationEnv()
     model = PPO("MlpPolicy", env, verbose=0, device="cpu")
-
-    obs, _ = env.reset()
-    rewards = []
-    acc = 0
-    for _ in range(30000):
-        action, _ = model.predict(obs)
-        obs, reward, done, _, _ = env.step(action)
-        acc += reward
-        if done:
-            rewards.append(acc)
-            acc = 0
-            obs, _ = env.reset()
+    model.learn(total_timesteps=100000)
 
 
 if __name__ == "__main__":
