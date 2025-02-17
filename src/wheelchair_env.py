@@ -5,8 +5,8 @@ from stable_baselines3 import PPO
 import logging
 
 
-class CorridorNavigationEnv(Supervisor, gym.Env):
-    def __init__(self):
+class WheelchairEnv(Supervisor, gym.Env):
+    def __init__(self, id: int = 0):
         super().__init__()
         self.webots_timestep = int(self.getBasicTimeStep())
 
@@ -42,13 +42,13 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             wheel.setVelocity(0)
             self.wheels.append(wheel)
 
-        self.robot = self.getFromDef("Giorgio_0")
+        self.robot = self.getFromDef(f"Giorgio_{id}")
 
-        self.lidar = self.getDevice("Lidar_0")
+        self.lidar = self.getDevice(f"Lidar_{id}")
         self.lidar.enable(self.webots_timestep)
         self.lidar.enablePointCloud()
 
-        self.bumper = self.getDevice("Bumper_0")
+        self.bumper = self.getDevice(f"Bumper_{id}")
         self.bumper.enable(self.webots_timestep)
 
         self.init_translation = self.robot.getField("translation").getSFVec3f()
@@ -57,13 +57,12 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         self.goal = [1e9, 2.2, 1e9]
 
         logging.basicConfig(
-            filename="logs/turtle0.log",
+            filename=f"logs/giorgio_{id}.log",
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
 
     def reset(self, seed=None):
-        print("Resetting environment")
         self.timestep = 0
 
         self.robot.getField("translation").setSFVec3f(self.init_translation)
@@ -117,11 +116,11 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
         if np.any(diff >= self.goal[1]):
             reward += self.end_reward
             done = True
-            print("Goal reached in", self.timestep, "steps with reward", reward)
+            logging.info("Goal reached in", self.timestep, "steps with reward", reward)
         elif self.bumper.getValue() == 1:
             reward -= self.end_reward
             done = True
-            print(
+            logging.info(
                 "Episode terminated in",
                 self.timestep,
                 "steps due to collision with reward",
@@ -131,7 +130,7 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
             reward -= self.end_reward
             done = True
             truncated = True
-            print(
+            logging.info(
                 "Episode terminated in",
                 self.timestep,
                 "steps due to time limit with reward",
@@ -142,7 +141,7 @@ class CorridorNavigationEnv(Supervisor, gym.Env):
 
 
 def main():
-    env = CorridorNavigationEnv()
+    env = WheelchairEnv()
     model = PPO("MlpPolicy", env, verbose=0, device="cpu")
     model.learn(total_timesteps=200000)
 

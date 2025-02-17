@@ -12,7 +12,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.4810399725071975 -0.17788552360723883 -0.8584621630224907 3.7572154702648524
+  orientation 0.4841231855133943 -0.17937144281762982 -0.8564173204401495 3.756947558274625
   position 0.22286473196774725 -5.847095675625331 7.813065877838128
 }
 TexturedBackground {
@@ -25,7 +25,7 @@ Floor {
     type "light strip"
   }
 }
-TurtleBot3Burger {
+DEF Giorgio_0 TurtleBot3Burger {
   hidden position_0_0 73.99012110161411
   hidden position_0_1 73.99012095812714
   hidden position_0_2 -506.86581852070395
@@ -34,24 +34,24 @@ TurtleBot3Burger {
   hidden translation_9 2.0454011881272023e-08 -0.08000000004301633 0.033004406321830146
   hidden rotation_9 0 -1 0 2.9788985845409264
   hidden translation_10 2.059606182802454e-08 0.0799999999566694 0.033004436923076044
-  hidden rotation_10 -0.08125429393592343 -1.50616003791631e-06 -0.9966934030657102 3.1415891065028583
-  hidden translation_11 -0.08099731239553133 -2.754050021965119e-06 0.003995182497264722
+  hidden rotation_10 -0.08125429393592343 -1.5061600379078061e-06 -0.9966934030657102 3.1415891065028583
+  hidden translation_11 -0.08099731239553133 -2.7540500219651376e-06 0.003995182497264722
   hidden rotation_11 -0.999975976862388 0.00139239190741707 0.006790209340553662 4.210950933529768
   translation -4.25608 -4.61919 -0.000223214
   rotation 0.003113236329780914 -0.003092575465592066 0.9999903718219214 1.5708060218742692
-  name "Turtle0"
-  controller "robot-controller"
+  name "Giorgio_0"
+  controller "<extern>"
   supervisor TRUE
   extensionSlot [
     TouchSensor {
-      name "Bumper"
+      name "Bumper_0"
       boundingObject Cylinder {
         height 0.1
         radius 0.09
       }
     }
     RobotisLds01 {
-      name "Lidar"
+      name "Lidar_0"
       noise 0.002
     }
   ]
