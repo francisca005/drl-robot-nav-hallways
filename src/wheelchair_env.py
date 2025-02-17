@@ -1,150 +1,57 @@
-from controller import Supervisor
 import gymnasium as gym
 import numpy as np
-from stable_baselines3 import PPO
-import logging
+import socket
+import pickle
 
 
-class WheelchairEnv(Supervisor, gym.Env):
-    def __init__(self, id: int = 0):
-        super().__init__()
-        self.webots_timestep = int(self.getBasicTimeStep())
+class WheelchairEnv(gym.Env):
+    """Custom Gym environment for Webots wheelchair navigation using PPO."""
 
-        """
-        Define action and observation space.
-        """
-        self.MAX_SPEED = 5
-        self.actions = [
-            (self.MAX_SPEED, self.MAX_SPEED),
-            (self.MAX_SPEED, self.MAX_SPEED / 2),
-            (self.MAX_SPEED / 2, self.MAX_SPEED),
-        ]
-        self.num_to_action = lambda i: self.actions[i]
+    def __init__(self, id, host="127.0.0.1", port=5000):
+        super(WheelchairEnv, self).__init__()
 
-        self.action_space = gym.spaces.Discrete(len(self.actions))
+        self.robot_id = id  # Unique ID for each robot
+        self.host = host
+        self.port = port + id  # Each robot has a unique port
+        self.socket = None
 
-        self.n_samples = 360
+        # Webots settings
+        self.num_lidar_points = 360  # Assume LiDAR has 360 readings
+        self.action_space = gym.spaces.Box(
+            low=-1, high=1, shape=(2,), dtype=np.float32
+        )  # Left & Right wheel speeds
         self.observation_space = gym.spaces.Box(
-            low=0, high=10, shape=(self.n_samples,), dtype=np.float32
-        )
+            low=0, high=10, shape=(self.num_lidar_points,), dtype=np.float32
+        )  # LiDAR readings
 
-        self.timestep = 0
-        self.end_reward = 30
-        self.timelimit = 1000
+        self.connect_to_robot()  # Establish socket connection
 
-        """
-        Setup wheels and lidar devices.
-        """
-        self.wheels = []
-        for name in ["left wheel motor", "right wheel motor"]:
-            wheel = self.getDevice(name)
-            wheel.setPosition(float("inf"))
-            wheel.setVelocity(0)
-            self.wheels.append(wheel)
-
-        self.robot = self.getFromDef(f"Giorgio_{id}")
-
-        self.lidar = self.getDevice(f"Lidar_{id}")
-        self.lidar.enable(self.webots_timestep)
-        self.lidar.enablePointCloud()
-
-        self.bumper = self.getDevice(f"Bumper_{id}")
-        self.bumper.enable(self.webots_timestep)
-
-        self.init_translation = self.robot.getField("translation").getSFVec3f()
-        self.init_rotation = self.robot.getField("rotation").getSFRotation()
-
-        self.goal = [1e9, 2.2, 1e9]
-
-        logging.basicConfig(
-            filename=f"logs/giorgio_{id}.log",
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-        )
-
-    def reset(self, seed=None):
-        self.timestep = 0
-
-        self.robot.getField("translation").setSFVec3f(self.init_translation)
-        self.robot.getField("rotation").setSFRotation(self.init_rotation)
-
-        for wheel in self.wheels:
-            wheel.setVelocity(0)
-
-        self.simulationResetPhysics()
-        super().step(self.webots_timestep)
-
-        return self.get_obs(), {}
-
-    def get_obs(self):
-        lidar_values = np.array(self.lidar.getRangeImage(), dtype=np.float32)
-        return np.clip(lidar_values, 0, 10)
-
-    def calculate_reward(self, lidar, action):
-        lidar = np.array(lidar, dtype=np.float32)
-        lidar = np.clip(lidar, 0, 10)
-        lidar = lidar[70:290]  # consider only front lidar values
-
-        reward = -0.02  # incentive to move quicker
-        threshold = 0.5  # threshold for min distance to a wall to give negative reward
-
-        min_dist = np.min(lidar)
-        if min_dist <= threshold:
-            reward -= np.exp(-min_dist)
-
-        # TODO: consider (previous) action for reward
-
-        return reward
+    def connect_to_robot(self):
+        """Connect to Webots robot via socket."""
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+        print(f"Robot {self.robot_id} connected on port {self.port}")
 
     def step(self, action):
-        self.timestep += 1
-        done = False
-        truncated = False
+        """Sends action to Webots, receives next state, reward, and done flag."""
+        try:
+            # Send action to Webots robot
+            self.socket.sendall(pickle.dumps(action))
 
-        l, r = self.num_to_action(action)
-        self.wheels[0].setVelocity(l)
-        self.wheels[1].setVelocity(r)
+            # Receive state, reward, done flag
+            data = self.socket.recv(4096)
+            obs, done, reward = pickle.loads(data)
+            return np.array(obs), reward, done, {}
 
-        super().step(self.webots_timestep)
+        except Exception as e:
+            print(f"Error in step(): {e}")
+            return np.zeros(self.observation_space.shape), 0, True, {}
 
-        lidar_values = self.get_obs()
-        reward = self.calculate_reward(lidar_values, action)
+    def reset(self):
+        """Resets the environment (Webots will handle reset)."""
+        return np.zeros(self.observation_space.shape)
 
-        pos = self.robot.getField("translation").getSFVec3f()
-        diff = pos[1] - self.init_translation[1]
-
-        if np.any(diff >= self.goal[1]):
-            reward += self.end_reward
-            done = True
-            logging.info("Goal reached in", self.timestep, "steps with reward", reward)
-        elif self.bumper.getValue() == 1:
-            reward -= self.end_reward
-            done = True
-            logging.info(
-                "Episode terminated in",
-                self.timestep,
-                "steps due to collision with reward",
-                reward,
-            )
-        elif self.timestep >= self.timelimit:
-            reward -= self.end_reward
-            done = True
-            truncated = True
-            logging.info(
-                "Episode terminated in",
-                self.timestep,
-                "steps due to time limit with reward",
-                reward,
-            )
-
-        return lidar_values, reward, done, truncated, {}
-
-
-def main():
-    env = WheelchairEnv()
-    model = PPO("MlpPolicy", env, verbose=0, device="cpu")
-    model.learn(total_timesteps=200000)
-
-
-if __name__ == "__main__":
-    main()
+    def close(self):
+        """Closes the socket connection."""
+        if self.socket:
+            self.socket.close()
