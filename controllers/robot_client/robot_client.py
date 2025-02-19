@@ -1,38 +1,46 @@
 from controller import Supervisor
 import socket
 import pickle
+import sys
 
 HOST = "127.0.0.1"
 PORT = 5000
-EPISODE_LENGTH = 500  # Maximum steps before reset
+EPISODE_LENGTH = 1000
 
 
 class RobotClient:
     def __init__(self, id: int = 0):
-        self.supervisor = Supervisor()  # Use Supervisor instead of Robot
+        self.supervisor = Supervisor()
         self.timestep = int(self.supervisor.getBasicTimeStep())
 
         self.robot_node = self.supervisor.getFromDef(f"Giorgio_{id}")
+        print(f"Giorgio {id} connected")
 
-        # Connect to RL server
+        """ Connect to RL server """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((HOST, PORT))
 
         self.lidar = self.supervisor.getDevice("lidar")
         self.lidar.enable(self.timestep)
 
-        self.left_motor = self.supervisor.getDevice("left_wheel_motor")
-        self.right_motor = self.supervisor.getDevice("right_wheel_motor")
+        self.bumper = self.supervisor.getDevice("bumper")
+        self.bumper.enable(self.timestep)
+
+        self.left_motor = self.supervisor.getDevice("left wheel motor")
+        self.right_motor = self.supervisor.getDevice("right wheel motor")
         self.left_motor.setPosition(float("inf"))
         self.right_motor.setPosition(float("inf"))
 
-        # Store initial position for resetting
+        """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
+
+        self.MAX_SPEED = 5
+        self.actions = [(self.MAX_SPEED, self.MAX_SPEED)]
 
     def reset_robot(self):
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
-        self.supervisor.simulationResetPhysics()  # Reset physics to avoid weird movement
+        self.supervisor.simulationResetPhysics()
 
     def run(self):
         for episode in range(1000):  # Run multiple episodes
@@ -40,13 +48,9 @@ class RobotClient:
             step_count = 0
 
             while not done and self.supervisor.step(self.timestep) != -1:
-                # Get LiDAR readings
                 obs = self.lidar.getRangeImage()
 
-                # Define reward function (adjust this for better training)
-                reward = (
-                    1.0 if sum(obs) > 5 else -1.0
-                )  # Example: encourage moving forward
+                reward = 0
 
                 # End episode if max steps reached or collision detected
                 step_count += 1
@@ -61,7 +65,7 @@ class RobotClient:
                 action = pickle.loads(data)
 
                 # Apply action
-                speed_left, speed_right = action
+                speed_left, speed_right = self.actions[action]
                 self.left_motor.setVelocity(speed_left)
                 self.right_motor.setVelocity(speed_right)
 
@@ -69,11 +73,13 @@ class RobotClient:
             self.reset_robot()  # Reset robot position after each episode
 
     def detect_collision(self):
-        """Detects if the robot has crashed by checking LiDAR readings."""
-        min_distance = min(self.lidar.getRangeImage())
-        return min_distance < 0.1  # Adjust threshold based on your environment
+        return self.bumper.getValue() == 1
 
 
 if __name__ == "__main__":
-    client = RobotClient()
+    if len(sys.argv) == 0:
+        print("Usage: python robot_client.py <robot_id>")
+        sys.exit(1)
+
+    client = RobotClient(id=int(sys.argv[1]))
     client.run()
