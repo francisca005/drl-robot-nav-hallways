@@ -34,16 +34,13 @@ class RobotClient:
         """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
 
-        self.MAX_SPEED = 5
-        self.actions = [(self.MAX_SPEED, self.MAX_SPEED)]
-
     def reset_robot(self):
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
         self.supervisor.simulationResetPhysics()
 
     def run(self):
-        for episode in range(1000):  # Run multiple episodes
+        for _ in range(1000):  # Run multiple episodes
             done = False
             step_count = 0
 
@@ -65,12 +62,11 @@ class RobotClient:
                 action = pickle.loads(data)
 
                 # Apply action
-                speed_left, speed_right = self.actions[action]
+                speed_left, speed_right = action
                 self.left_motor.setVelocity(speed_left)
                 self.right_motor.setVelocity(speed_right)
 
-            print(f"Episode {episode} finished. Resetting...")
-            self.reset_robot()  # Reset robot position after each episode
+            self.reset_robot()
 
     def detect_collision(self):
         return self.bumper.getValue() == 1
