@@ -1,24 +1,18 @@
 from controller import Supervisor
-import socket
 import pickle
+import numpy as np
 import sys
-
-HOST = "127.0.0.1"
-PORT = 5000
-EPISODE_LENGTH = 1000
 
 
 class RobotClient:
     def __init__(self, id: int = 0):
+        self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
+        self.w_path = "/tmp/giorgio_" + str(id) + "_act"
+
         self.supervisor = Supervisor()
         self.timestep = int(self.supervisor.getBasicTimeStep())
 
         self.robot_node = self.supervisor.getFromDef(f"Giorgio_{id}")
-        print(f"Giorgio {id} connected")
-
-        """ Connect to RL server """
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((HOST, PORT))
 
         self.lidar = self.supervisor.getDevice("lidar")
         self.lidar.enable(self.timestep)
@@ -40,33 +34,34 @@ class RobotClient:
         self.supervisor.simulationResetPhysics()
 
     def run(self):
-        for _ in range(1000):  # Run multiple episodes
-            done = False
-            step_count = 0
+        while self.supervisor.step(self.timestep) != -1:
+            action = self.get_action()
+            self.update_motors(action)
+            obs = self.read_observation()
+            self.send_observation(obs)
 
-            while not done and self.supervisor.step(self.timestep) != -1:
-                obs = self.lidar.getRangeImage()
+    def get_action(self):
+        with open(self.r_path, "rb") as f:
+            print("Waiting for action...")
+            action = np.array(pickle.load(f))
+            print("Received action:", action)
+        return action
 
-                reward = 0
+    def send_observation(self, obs):
+        with open(self.w_path, "wb") as f:
+            pickle.dump(obs, f)
+            print("Sent observation")
 
-                # End episode if max steps reached or collision detected
-                step_count += 1
-                if step_count >= EPISODE_LENGTH or self.detect_collision():
-                    done = True
+    def update_motors(self, action):
+        # action is pair linear velocity, angular velocity
+        # convert to motor speeds
+        left_speed = action[0] - action[1]
+        right_speed = action[0] + action[1]
+        self.left_motor.setVelocity(left_speed)
+        self.right_motor.setVelocity(right_speed)
 
-                # Send observations, done flag, and reward
-                self.socket.sendall(pickle.dumps((obs, done, reward)))
-
-                # Receive action
-                data = self.socket.recv(4096)
-                action = pickle.loads(data)
-
-                # Apply action
-                speed_left, speed_right = action
-                self.left_motor.setVelocity(speed_left)
-                self.right_motor.setVelocity(speed_right)
-
-            self.reset_robot()
+    def read_observation(self):
+        return np.clip(np.array(self.lidar.getRangeImage()), 0, 10)
 
     def detect_collision(self):
         return self.bumper.getValue() == 1
