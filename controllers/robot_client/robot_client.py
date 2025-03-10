@@ -1,4 +1,4 @@
-from controller import Supervisor
+from controller import Supervisor, Robot
 import pickle
 import numpy as np
 import sys
@@ -20,6 +20,9 @@ class RobotClient:
         self.bumper = self.supervisor.getDevice("bumper")
         self.bumper.enable(self.timestep)
 
+        self.receiver = self.supervisor.getDevice("receiver")
+        self.receiver.enable(self.timestep)
+
         self.left_motor = self.supervisor.getDevice("left wheel motor")
         self.right_motor = self.supervisor.getDevice("right wheel motor")
         self.left_motor.setPosition(float("inf"))
@@ -28,10 +31,15 @@ class RobotClient:
         """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
 
+        self.reset_robot()
+
     def reset_robot(self):
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
         self.supervisor.simulationResetPhysics()
+
+        while self.receiver.getQueueLength() > 0:
+            self.receiver.nextPacket
 
     def run(self):
         while self.supervisor.step(self.timestep) != -1:
@@ -40,17 +48,23 @@ class RobotClient:
             obs = self.read_observation()
             self.send_observation(obs)
 
+            if self.detect_collision():
+                self.reset_robot()
+
+            if self.detect_end():
+                print("End reached")
+                self.reset_robot()
+
     def get_action(self):
-        with open(self.r_path, "rb") as f:
-            print("Waiting for action...")
-            action = np.array(pickle.load(f))
-            print("Received action:", action)
+        # with open(self.r_path, "rb") as f:
+        #     action = np.array(pickle.load(f))
+        action = np.array([1, 0])
         return action
 
     def send_observation(self, obs):
-        with open(self.w_path, "wb") as f:
-            pickle.dump(obs, f)
-            print("Sent observation")
+        pass
+        # with open(self.w_path, "wb") as f:
+        #     pickle.dump(obs, f)
 
     def update_motors(self, action):
         # action is pair linear velocity, angular velocity
@@ -65,6 +79,9 @@ class RobotClient:
 
     def detect_collision(self):
         return self.bumper.getValue() == 1
+
+    def detect_end(self):
+        return self.receiver.getQueueLength() > 0
 
 
 if __name__ == "__main__":
