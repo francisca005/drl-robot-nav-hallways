@@ -5,7 +5,7 @@ import sys
 
 
 class RobotClient:
-    def __init__(self, id: int = 0):
+    def __init__(self, id: int):
         self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
         self.w_path = "/tmp/giorgio_" + str(id) + "_act"
 
@@ -33,7 +33,7 @@ class RobotClient:
 
         self.reset_robot()
 
-    def reset_robot(self):
+    def reset_robot(self) -> None:
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
         self.supervisor.simulationResetPhysics()
@@ -42,51 +42,62 @@ class RobotClient:
         while self.receiver.getQueueLength() > 0:
             self.receiver.nextPacket()
 
-    def run(self):
+    def run(self) -> None:
         while self.supervisor.step(self.timestep) != -1:
             action = self.get_action()
             self.update_motors(action)
-            obs = self.read_observation()
-            self.send_observation(obs)
+
+            """Observation sent to server is lidar readings + collision/end flag"""
+            obs = np.append(self.read_observation(), 0)
 
             if self.detect_collision():
+                obs[obs.size - 1] = 1  # 1 means collision
+                self.reset_robot()
+            elif self.detect_end():
+                obs[obs.size - 1] = 2  # 2 means reached end of corridor successfully
                 self.reset_robot()
 
-            if self.detect_end():
-                print("End reached")
-                self.reset_robot()
+            self.send_observation(obs)
 
-    def get_action(self):
-        # with open(self.r_path, "rb") as f:
-        #     action = np.array(pickle.load(f))
-        action = np.array([5, 0])
-        return action
+    def get_action(self) -> np.ndarray:
+        """Open pipe and read action from server"""
+        with open(self.r_path, "rb") as f:
+            return np.array(pickle.load(f), dtype=np.float32)
 
-    def send_observation(self, obs):
-        pass
-        # with open(self.w_path, "wb") as f:
-        #     pickle.dump(obs, f)
+    def send_observation(self, obs: np.ndarray) -> None:
+        """Open pipe and send observation to server"""
+        with open(self.w_path, "wb") as f:
+            pickle.dump(obs, f)
 
-    def update_motors(self, action):
-        # action is pair linear velocity, angular velocity
-        # convert to motor speeds
+    def update_motors(self, action: np.ndarray) -> None:
+        """
+        Action is pair linear velocity, angular velocity
+        Convert to left and right wheel speeds
+        """
         left_speed = action[0] - action[1]
         right_speed = action[0] + action[1]
         self.left_motor.setVelocity(left_speed)
         self.right_motor.setVelocity(right_speed)
 
-    def read_observation(self):
+    def read_observation(self) -> np.ndarray:
+        """Clip to avoid inf or nan values"""
         return np.clip(np.array(self.lidar.getRangeImage()), 0, 10)
 
-    def detect_collision(self):
+    def detect_collision(self) -> bool:
+        """Bumper value is 1 if collision is detected, else 0"""
         return self.bumper.getValue() == 1
 
-    def detect_end(self):
+    def detect_end(self) -> bool:
+        """
+        End strip has an emmitter that sends a message when collision is detected
+        Note that in the Webots world, the end strip sends messages in the same channel that the robot is listening
+        And, of course, robots and strips on different corridors use different channels
+        """
         return self.receiver.getQueueLength() > 0
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 0:
+    if len(sys.argv) != 2:
         print("Usage: python robot_client.py <robot_id>")
         sys.exit(1)
 
