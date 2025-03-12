@@ -4,15 +4,16 @@ import time
 robot = Robot()
 timestep = int(robot.getBasicTimeStep())
 
-touch_sensor = robot.getDevice("touch_sensor")
+touch_sensor = robot.getDevice("Bumper")
 touch_sensor.enable(timestep)
 
-emitter = robot.getDevice("emitter")
+emitter = robot.getDevice("Emitter")
+print("End strip controller started")
 
 while robot.step(timestep) != -1:
     value = touch_sensor.getValue()
 
     if value > 0:
+        print("strip detected collision")
         message = "collision".encode("utf-8")
         emitter.send(message)
-        time.sleep(0.5)

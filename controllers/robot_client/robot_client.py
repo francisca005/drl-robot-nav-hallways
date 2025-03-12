@@ -12,15 +12,15 @@ class RobotClient:
         self.supervisor = Supervisor()
         self.timestep = int(self.supervisor.getBasicTimeStep())
 
-        self.robot_node = self.supervisor.getFromDef(f"Giorgio_{id}")
+        self.robot_node = self.supervisor.getFromDef("Giorgio")
 
-        self.lidar = self.supervisor.getDevice("lidar")
+        self.lidar = self.supervisor.getDevice("Lidar")
         self.lidar.enable(self.timestep)
 
-        self.bumper = self.supervisor.getDevice("bumper")
+        self.bumper = self.supervisor.getDevice("Bumper")
         self.bumper.enable(self.timestep)
 
-        self.receiver = self.supervisor.getDevice("receiver")
+        self.receiver = self.supervisor.getDevice("Receiver")
         self.receiver.enable(self.timestep)
 
         self.left_motor = self.supervisor.getDevice("left wheel motor")
@@ -38,8 +38,9 @@ class RobotClient:
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
         self.supervisor.simulationResetPhysics()
 
+        # Seems to never have more than 1 packet in the queue
         while self.receiver.getQueueLength() > 0:
-            self.receiver.nextPacket
+            self.receiver.nextPacket()
 
     def run(self):
         while self.supervisor.step(self.timestep) != -1:
@@ -58,7 +59,7 @@ class RobotClient:
     def get_action(self):
         # with open(self.r_path, "rb") as f:
         #     action = np.array(pickle.load(f))
-        action = np.array([1, 0])
+        action = np.array([5, 0])
         return action
 
     def send_observation(self, obs):

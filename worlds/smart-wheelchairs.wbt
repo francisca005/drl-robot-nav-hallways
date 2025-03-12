@@ -12,8 +12,35 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.4134330183489434 0.41071634288690817 0.8126408954910439 1.7832387442675277
-  position -3.7131303419888044 -7.832501025064741 5.860064448383694
+  orientation 0.18549533787157832 -0.8908605723196503 -0.4146792981500452 5.352494714331987
+  position -7.8180019237262695 -5.84781492118374 5.075140283821581
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -4.24739 -4.54843 -0.000269954
+  rotation 0.0023114459393429893 -0.002321477118946034 0.9999946339664306 1.5706773615588259
+  name "Giorgio"
+  controller "robot_client"
+  controllerArgs [
+    "0"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.09
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 1
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+  ]
 }
 TexturedBackground {
 }
@@ -26,11 +53,8 @@ Floor {
   }
 }
 Robot {
-  translation -4.25 -2.16 0.02
+  translation -4.25 -2.16 0.03
   children [
-    Emitter {
-      channel 1
-    }
     Shape {
       appearance Appearance {
         material Material {
@@ -38,89 +62,22 @@ Robot {
         }
       }
       geometry Box {
-        size 1.3 0.2 0.01
+        size 1.3 0.1 0.01
       }
     }
+    Emitter {
+      name "Emitter"
+      channel 1
+    }
     TouchSensor {
-      name "touch_sensor"
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
     }
   ]
   name "End Strip"
   controller "end_strip_controller"
-}
-DEF Giorgio_0 TurtleBot3Burger {
-  hidden position_0_0 73.99012110161411
-  hidden position_0_1 73.99012095812714
-  hidden position_0_2 -506.86581852070395
-  hidden position2_0_2 -0.011275150012857596
-  hidden position3_0_2 -0.0038928918769422644
-  hidden translation_10 2.0596061827882238e-08 0.07999999995666941 0.033004436923076044
-  hidden rotation_10 -0.08125429393592343 -1.5061600379036436e-06 -0.9966934030657101 3.1415891065028583
-  hidden translation_11 -0.08099731239553132 -2.7540500219386255e-06 0.003995182497264722
-  hidden rotation_11 -0.9999759768623883 0.0013923919074171063 0.006790209340553895 4.210950933529768
-  hidden translation_12 -0.08099708758620616 -5.429376063216353e-06 0.003999763222963731
-  hidden rotation_12 0.6876773427064605 -0.6362901394139974 0.3496208386419452 2.3314238882853533
-  translation -4.558416262723396 -4.568698870398071 -0.00439007778135244
-  rotation 0.010309591807930507 0.05433993377329301 0.9984692703905654 1.4251016983926648
-  name "Giorgio_0"
-  controller "robot_client"
-  controllerArgs [
-    "0"
-  ]
-  supervisor TRUE
-  extensionSlot [
-    Receiver {
-      channel 1
-    }
-    TouchSensor {
-      name "bumper"
-      boundingObject Cylinder {
-        height 0.1
-        radius 0.09
-      }
-    }
-    RobotisLds01 {
-      name "lidar"
-      noise 0.002
-    }
-  ]
-}
-DEF Giorgio_1 TurtleBot3Burger {
-  hidden position_0_0 73.99012110161411
-  hidden position_0_1 73.99012095812714
-  hidden position_0_2 -506.86581852070395
-  hidden position2_0_2 -0.011275150012857596
-  hidden position3_0_2 -0.0038928918769422644
-  hidden translation_10 2.0596061827882238e-08 0.07999999995666941 0.033004436923076044
-  hidden rotation_10 -0.08125429393592343 -1.5061600379035737e-06 -0.9966934030657101 3.1415891065028583
-  hidden translation_11 -0.08099731239553132 -2.7540500219386255e-06 0.003995182497264722
-  hidden rotation_11 -0.9999759768623883 0.0013923919074171063 0.006790209340553895 4.210950933529768
-  hidden translation_12 -0.08099731269265524 -2.753959216708209e-06 0.003995182279608036
-  hidden rotation_12 -0.9999758237705771 0.001352670778320013 0.006820715220653321 4.210950296317743
-  translation -4.0003956463747565 -4.572312732890291 -0.00025218744609126903
-  rotation 0.002258705703809495 -0.002268542542556263 0.9999948759685103 1.5708795930171313
-  name "Giorgio_1"
-  controller "robot_client"
-  controllerArgs [
-    "1"
-  ]
-  supervisor TRUE
-  extensionSlot [
-    Receiver {
-      channel 1
-    }
-    TouchSensor {
-      name "bumper"
-      boundingObject Cylinder {
-        height 0.1
-        radius 0.09
-      }
-    }
-    RobotisLds01 {
-      name "lidar"
-      noise 0.002
-    }
-  ]
 }
 Wall {
   translation 0 5 0
