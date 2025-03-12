@@ -1,24 +1,29 @@
 #VRML_SIM R2023b utf8
 
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/devices/robotis/protos/RobotisLds01.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.18549533787157832 -0.8908605723196503 -0.4146792981500452 5.352494714331987
-  position -7.8180019237262695 -5.84781492118374 5.075140283821581
+  orientation 0.2627183682848684 -0.7662874118680371 -0.586329823033352 5.22495075097981
+  position -8.328385970271274 -7.146265976201284 7.512037402039727
+}
+TexturedBackground {
+  skyColor [
+    0.2 0.2 0.2
+  ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -4.24739 -4.54843 -0.000269954
+  translation -4.28618 -4.57495 0
   rotation 0.0023114459393429893 -0.002321477118946034 0.9999946339664306 1.5706773615588259
-  name "Giorgio"
+  name ""
   controller "robot_client"
   controllerArgs [
     "0"
@@ -42,17 +47,37 @@ DEF Giorgio TurtleBot3Burger {
     }
   ]
 }
-TexturedBackground {
+DEF Giorgio TurtleBot3Burger {
+  translation -2.71597 -4.6245 0
+  rotation 0.0023114459393429893 -0.002321477118946034 0.9999946339664306 1.5706773615588259
+  name ""
+  controller "robot_client"
+  controllerArgs [
+    "1"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.09
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 2
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+  ]
 }
 TexturedBackgroundLight {
   castShadows FALSE
 }
-Floor {
-  appearance Parquetry {
-    type "light strip"
-  }
-}
-Robot {
+DEF End_Strip Robot {
   translation -4.25 -2.16 0.03
   children [
     Shape {
@@ -76,89 +101,125 @@ Robot {
       }
     }
   ]
-  name "End Strip"
   controller "end_strip_controller"
 }
-Wall {
-  translation 0 5 0
-  size 10 0.1 0.5
+DEF End_Strip Robot {
+  translation -2.75 -2.16 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 2
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(1)"
+  controller "end_strip_controller"
 }
-Wall {
-  translation 0 -5 0
-  name "wall(1)"
-  size 10 0.1 0.5
-}
-Wall {
-  translation 5 0 0
-  name "wall(2)"
-  size 0.1 10.1 0.5
-}
-Wall {
-  translation -5 0 0
-  name "wall(3)"
-  size 0.1 10.1 0.5
-}
-Wall {
-  translation -1.99593 -3.46784 1.06581e-14
-  name "wall(4)"
-  size 0.1 3 0.5
-}
-Wall {
-  translation -0.504039 -3.45427 1.42109e-14
-  name "wall(9)"
-  size 0.1 3 0.5
-}
-Wall {
-  translation 1 -3.45 0
-  name "wall(5)"
-  size 0.1 3 0.5
-}
-Wall {
-  translation 2.5 -3.45 0
-  name "wall(10)"
-  size 0.1 3 0.5
-}
-Wall {
-  translation -3.50018 -3.46861 2.66453e-15
-  name "wall(7)"
-  size 0.1 3 0.5
-}
-Wall {
-  translation -2.45139 -3.30654 -5.2591e-21
-  rotation 0 0 1 -1.5707953071795862
-  name "wall(6)"
-  size 0.025 1 0.5
-}
-Wall {
-  translation -1.54729 -3.30612 -1.77636e-15
-  rotation 0 0 1 -1.5707953071795862
-  name "wall(11)"
-  size 0.025 1 0.5
-}
-Wall {
-  translation -0.25 -3.31581 -1.77636e-15
-  rotation 0 0 1 -1.5707953071795862
-  name "wall(13)"
-  size 0.025 0.5 0.5
-}
-Wall {
-  translation 0.75 -3.31581 -1.77636e-15
-  rotation 0 0 1 -1.5707953071795862
-  name "wall(14)"
-  size 0.025 0.5 0.5
-}
-SolidBox {
-  translation 1.75 -3.30038 0.25
-  rotation 0 0 1 -5.307179586466759e-06
-  size 0.25 0.25 0.5
-  appearance PBRAppearance {
-    roughness 0.5
-    metalness 0
-  }
-}
-Wall {
-  translation 0 -1.92739 5.32907e-15
-  rotation 0 0 1 -1.5707953071795862
-  name "wall(8)"
-  size 0.1 10 0.5
+DEF Scene Group {
+  children [
+    Floor {
+      appearance Parquetry {
+        type "light strip"
+      }
+    }
+    Wall {
+      translation 0 -1.92739 5.32907e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(12)"
+      size 0.1 10 0.5
+    }
+    SolidBox {
+      translation 1.75 -3.30038 0.25
+      rotation 0 0 1 -5.307179586466759e-06
+      size 0.25 0.25 0.5
+      appearance PBRAppearance {
+        roughness 0.5
+        metalness 0
+      }
+    }
+    Wall {
+      translation 0.75 -3.31581 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(11)"
+      size 0.025 0.5 0.5
+    }
+    Wall {
+      translation -0.25 -3.31581 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(10)"
+      size 0.025 0.5 0.5
+    }
+    Wall {
+      translation -1.54729 -3.30612 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(9)"
+      size 0.025 1 0.5
+    }
+    Wall {
+      translation -2.45139 -3.30654 -5.2591e-21
+      rotation 0 0 1 -1.5707953071795862
+      name "(8)"
+      size 0.025 1 0.5
+    }
+    Wall {
+      translation -3.50018 -3.46861 2.66453e-15
+      name "(7)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation 2.5 -3.45 0
+      name "(6)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation 1 -3.45 0
+      name "(5)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -0.504039 -3.45427 1.42109e-14
+      name "(4)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -1.99593 -3.46784 1.06581e-14
+      name "(3)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -5 0 0
+      name "(2)"
+      size 0.1 10.1 0.5
+    }
+    Wall {
+      translation 5 0 0
+      name "(1)"
+      size 0.1 10.1 0.5
+    }
+    Wall {
+      translation 0 -5 0
+      name ""
+      size 10 0.1 0.5
+    }
+    Wall {
+      translation 0 5 0
+      name ""
+      size 10 0.1 0.5
+    }
+  ]
 }
