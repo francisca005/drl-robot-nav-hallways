@@ -4,7 +4,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from wheelchair_env import WheelchairEnv
 
 TRAIN_STEPS = 100_000
-N_ROBOTS = 1
+N_ROBOTS = 2
 
 
 def train_model():
@@ -25,6 +25,7 @@ def train_model():
         env = SubprocVecEnv([env_fn(i) for i in range(N_ROBOTS)])
 
         model = PPO("MlpPolicy", env, verbose=1, device="cpu")
+        print("Calling learn")
         model.learn(total_timesteps=TRAIN_STEPS)
         model.save("ppo_wheelchair")
 

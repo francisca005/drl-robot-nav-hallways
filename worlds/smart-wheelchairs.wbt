@@ -12,8 +12,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.2627183682848684 -0.7662874118680371 -0.586329823033352 5.22495075097981
-  position -8.328385970271274 -7.146265976201284 7.512037402039727
+  orientation 0.2837348248580294 -0.6101353877593876 -0.7397495236676298 5.160760757668351
+  position -8.316084346114675 -10.452281448633702 7.235383874609181
 }
 TexturedBackground {
   skyColor [
@@ -23,7 +23,7 @@ TexturedBackground {
 DEF Giorgio TurtleBot3Burger {
   translation -4.28618 -4.57495 0
   rotation 0.0023114459393429893 -0.002321477118946034 0.9999946339664306 1.5706773615588259
-  name ""
+  name "Giorgio 0"
   controller "robot_client"
   controllerArgs [
     "0"
@@ -50,7 +50,7 @@ DEF Giorgio TurtleBot3Burger {
 DEF Giorgio TurtleBot3Burger {
   translation -2.71597 -4.6245 0
   rotation 0.0023114459393429893 -0.002321477118946034 0.9999946339664306 1.5706773615588259
-  name ""
+  name "Giorgio 1"
   controller "robot_client"
   controllerArgs [
     "1"
@@ -213,12 +213,12 @@ DEF Scene Group {
     }
     Wall {
       translation 0 -5 0
-      name ""
+      name "3"
       size 10 0.1 0.5
     }
     Wall {
       translation 0 5 0
-      name ""
+      name "42"
       size 10 0.1 0.5
     }
   ]

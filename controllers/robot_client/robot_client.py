@@ -1,49 +1,54 @@
-from controller import Supervisor, Robot
+from controller import Supervisor
 import pickle
 import numpy as np
 import sys
 
 
-class RobotClient:
+class RobotClient(Supervisor):
     def __init__(self, id: int):
+        print(f"!!! Robot {id} client started !!!")
+        super(RobotClient, self).__init__()
         self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
         self.w_path = "/tmp/giorgio_" + str(id) + "_act"
 
-        self.supervisor = Supervisor()
-        self.timestep = int(self.supervisor.getBasicTimeStep())
+        self.timestep = int(self.getBasicTimeStep())
 
-        self.robot_node = self.supervisor.getFromDef("Giorgio")
+        self.robot_node = self.getSelf()
 
-        self.lidar = self.supervisor.getDevice("Lidar")
+        self.lidar = self.getDevice("Lidar")
         self.lidar.enable(self.timestep)
 
-        self.bumper = self.supervisor.getDevice("Bumper")
+        self.bumper = self.getDevice("Bumper")
         self.bumper.enable(self.timestep)
 
-        self.receiver = self.supervisor.getDevice("Receiver")
+        self.receiver = self.getDevice("Receiver")
         self.receiver.enable(self.timestep)
 
-        self.left_motor = self.supervisor.getDevice("left wheel motor")
-        self.right_motor = self.supervisor.getDevice("right wheel motor")
+        self.left_motor = self.getDevice("left wheel motor")
+        self.right_motor = self.getDevice("right wheel motor")
         self.left_motor.setPosition(float("inf"))
         self.right_motor.setPosition(float("inf"))
 
         """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
 
+        print(f"Robot {id} client started")
+
         self.reset_robot()
 
     def reset_robot(self) -> None:
+        print("Resetting robot")
+
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
-        self.supervisor.simulationResetPhysics()
+        self.simulationResetPhysics()
 
         # Seems to never have more than 1 packet in the queue
         while self.receiver.getQueueLength() > 0:
             self.receiver.nextPacket()
 
     def run(self) -> None:
-        while self.supervisor.step(self.timestep) != -1:
+        while self.step(self.timestep) != -1:
             action = self.get_action()
             self.update_motors(action)
 
@@ -61,13 +66,21 @@ class RobotClient:
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
-        with open(self.r_path, "rb") as f:
-            return np.array(pickle.load(f), dtype=np.float32)
+        print("Waiting for action")
+        try:
+            with open(self.r_path, "rb") as f:
+                return np.array(pickle.load(f), dtype=np.float32)
+        except Exception as e:
+            print(f"Error getting action: {e}")
 
     def send_observation(self, obs: np.ndarray) -> None:
         """Open pipe and send observation to server"""
-        with open(self.w_path, "wb") as f:
-            pickle.dump(obs, f)
+        try:
+            with open(self.w_path, "wb") as f:
+                pickle.dump(obs, f)
+                f.flush()
+        except Exception as e:
+            print(f"Error sending observation: {e}")
 
     def update_motors(self, action: np.ndarray) -> None:
         """
@@ -101,5 +114,6 @@ if __name__ == "__main__":
         print("Usage: python robot_client.py <robot_id>")
         sys.exit(1)
 
+    print("hello?")
     client = RobotClient(id=int(sys.argv[1]))
     client.run()
