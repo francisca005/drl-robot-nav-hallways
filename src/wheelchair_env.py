@@ -21,11 +21,18 @@ class WheelchairEnv(gym.Env):
         Robot will be able to control speed of left and right wheels between 0 and 5.
         State is a vector of 360 lidar readings.
         """
-        self.action_shape = (2,)
         self.obs_shape = (360,)
-        self.action_space = gym.spaces.Box(
-            low=0.0, high=5.0, shape=self.action_shape, dtype=np.float32
-        )
+        self.action_space = gym.spaces.Discrete(5)
+        self.to_action = lambda x: (
+            [
+                [2, 0],  # Forward
+                [2, 2],  # Forward and left
+                [2, -2],  # Forward and right
+                [0.5, 2],  # Left
+                [0.5, -2],  # Right
+            ]
+        )[x]
+
         self.observation_space = gym.spaces.Box(
             low=0.0, high=10.0, shape=self.obs_shape, dtype=np.float32
         )
@@ -35,6 +42,7 @@ class WheelchairEnv(gym.Env):
         self.time_limit = 6000
 
     def step(self, action):
+        action = self.to_action(action)
         reward = self.get_reward(self.prev_obs, action)
         done = False
         truncated = False
@@ -60,20 +68,38 @@ class WheelchairEnv(gym.Env):
 
     def get_reward(self, obs, action):
         v, w = action
-        min_range = np.min(obs)
 
         # Reward for moving forward
         r_distance = 1 if v > 0 else -1
 
         # Collision penalty (if min_range is below a threshold)
-        min_threshold = 0.3  # Define a minimum safe distance
+        min_range = np.min(obs)
+        min_threshold = 0.3
         r_collision = -np.exp(10 * min_range) if min_range < min_threshold else 0
 
-        reward = r_distance + r_collision
+        r_direction = self.direction_reward(obs, action)
 
+        reward = r_distance + r_collision + r_direction
         reward += self.dual_reward(obs, action)
 
         return reward
+
+    def direction_reward(self, obs, action):
+        left = np.array(obs[90:178])
+        front = np.array(obs[178:183])
+        right = np.array(obs[183:270])
+
+        left_max = np.max(left)
+        front_max = np.max(front)
+        right_max = np.max(right)
+
+        """ Check which direction has the most free space and reward movement in that direction """
+        if max(left_max, front_max, right_max) == front_max:
+            return 2 if action[0] > 0 else -2
+        elif max(left_max, front_max, right_max) == left_max:
+            return 2 if action[1] > 0 else -2
+
+        return 2 if action[1] < 0 else -2
 
     def collision_reward(self):
         return -30
@@ -84,19 +110,24 @@ class WheelchairEnv(gym.Env):
         # when in fact it is not
         return 0
 
-    def dual_reward(self, obs, action):
-        clusters = self.cluster_lidar_readings(obs)
-        n = len(clusters)
+    def dual_reward(self, obs, action) -> int:
+        # clusters = self.cluster_lidar_readings(obs)
+        # n = len(clusters)
 
-        for cluster in clusters:
-            print(cluster)
+        # print("-" * 20)
+        # for cluster in clusters:
+        #     print(cluster)
 
-    def cluster_lidar_readings(lidar, fov=360):
+        # print("-" * 20)
+
+        return 0
+
+    def cluster_lidar_readings(self, lidar, fov=360):
         """
         Clusters LIDAR readings based on spatial proximity.
 
-        :param lidar_readings: NumPy array of shape (180,) with distance values.
-        :param fov: Field of view (degrees), typically 180 for each robot.
+        :param lidar_readings: NumPy array of shape (360,) with distance values.
+        :param fov: Field of view (degrees), typically 360 for each robot.
         :return: List of clusters (each cluster is a list of indices in lidar_readings).
         """
         n_rays = len(lidar)

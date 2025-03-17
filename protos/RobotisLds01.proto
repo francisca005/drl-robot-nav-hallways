@@ -189,7 +189,7 @@ PROTO RobotisLds01 [
       mass 0.125
     }
     %< } >%
-    horizontalResolution 180
+    horizontalResolution 360
     fieldOfView 6.28318
     numberOfLayers 1
     near 0.07

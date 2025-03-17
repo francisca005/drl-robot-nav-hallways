@@ -9,6 +9,8 @@ class RobotClient(Supervisor):
     def __init__(self, id: int):
         super(RobotClient, self).__init__()
 
+        self.id = id
+
         context = zmq.Context()
         self.socket = context.socket(zmq.REP)
         self.socket.connect("ipc:///tmp/rl/giorgio_" + str(id))
