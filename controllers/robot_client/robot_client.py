@@ -6,7 +6,6 @@ import sys
 
 class RobotClient(Supervisor):
     def __init__(self, id: int):
-        print(f"!!! Robot {id} client started !!!")
         super(RobotClient, self).__init__()
         self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
         self.w_path = "/tmp/giorgio_" + str(id) + "_act"
@@ -29,18 +28,18 @@ class RobotClient(Supervisor):
         self.left_motor.setPosition(float("inf"))
         self.right_motor.setPosition(float("inf"))
 
+        self.l = 0.12  # Distance between wheels
+
         """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
-
-        print(f"Robot {id} client started")
+        self.initial_rotation = self.robot_node.getField("rotation").getSFRotation()
 
         self.reset_robot()
 
     def reset_robot(self) -> None:
-        print("Resetting robot")
-
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
+        self.robot_node.getField("rotation").setSFRotation(self.initial_rotation)
         self.simulationResetPhysics()
 
         # Seems to never have more than 1 packet in the queue
@@ -66,7 +65,6 @@ class RobotClient(Supervisor):
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
-        print("Waiting for action")
         try:
             with open(self.r_path, "rb") as f:
                 return np.array(pickle.load(f), dtype=np.float32)
@@ -87,8 +85,8 @@ class RobotClient(Supervisor):
         Action is pair linear velocity, angular velocity
         Convert to left and right wheel speeds
         """
-        left_speed = action[0] - action[1]
-        right_speed = action[0] + action[1]
+        left_speed = action[0] - action[1] * self.l / 2
+        right_speed = action[0] + action[1] * self.l / 2
         self.left_motor.setVelocity(left_speed)
         self.right_motor.setVelocity(right_speed)
 
@@ -114,6 +112,5 @@ if __name__ == "__main__":
         print("Usage: python robot_client.py <robot_id>")
         sys.exit(1)
 
-    print("hello?")
     client = RobotClient(id=int(sys.argv[1]))
     client.run()

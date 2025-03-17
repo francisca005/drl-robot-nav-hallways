@@ -1,4 +1,3 @@
-from multiprocessing import shared_memory
 import pickle
 import gymnasium as gym
 import numpy as np
@@ -25,18 +24,52 @@ class WheelchairEnv(gym.Env):
             low=0.0, high=10.0, shape=self.obs_shape, dtype=np.float32
         )
 
+        self.prev_obs = self.no_obs()
+
     def step(self, action):
         self.send_action(action)
-        print("Sent action")
-        obs = self.get_observation()
 
-        reward = 0
+        reward = self.get_reward(self.prev_obs, action)
         done = False
+
+        # TODO: Implement truncated
         truncated = False
+
+        obs_done = self.get_observation()
+        obs, term = obs_done[:-1], obs_done[-1]
+
+        if term == 1:
+            reward += self.collision_reward()
+        elif term == 2:
+            done = True
+            reward += self.goal_reward()
+
+        self.prev_obs = obs
+
         return obs, reward, done, truncated, {}
 
+    def get_reward(self, obs, action):
+        v, w = action
+        min_range = np.min(obs)
+
+        # Reward for moving forward
+        r_distance = 1 if v > 0 else -1
+
+        # Collision penalty (if min_range is below a threshold)
+        min_threshold = 0.3  # Define a minimum safe distance
+        r_collision = -np.exp(10 * min_range) if min_range < min_threshold else 0
+
+        reward = r_distance + r_collision
+
+        return reward
+
+    def collision_reward(self):
+        return -30
+
+    def goal_reward(self):
+        return 30
+
     def send_action(self, action):
-        print("Sending action", action)
         try:
             with open(self.w_path, "wb") as f:
                 pickle.dump(action, f)
@@ -45,12 +78,16 @@ class WheelchairEnv(gym.Env):
             print(f"Error sending action: {e}")
 
     def get_observation(self):
-        print("Waiting for observation")
         try:
             with open(self.r_path, "rb") as f:
                 return pickle.load(f)
         except Exception as e:
             print(f"Error getting observation: {e}")
+            return self.prev_obs
+
+    def no_obs(self):
+        return np.full(self.obs_shape, 10.0)
 
     def reset(self, seed: int = None):
-        return np.zeros(self.obs_shape), {}
+        self.prev_obs = self.no_obs()
+        return self.prev_obs, {}
