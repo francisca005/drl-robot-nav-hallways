@@ -13,9 +13,6 @@ class RobotClient(Supervisor):
         self.socket = context.socket(zmq.REP)
         self.socket.connect("ipc:///tmp/rl/giorgio_" + str(id))
 
-        self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
-        self.w_path = "/tmp/giorgio_" + str(id) + "_act"
-
         self.timestep = int(self.getBasicTimeStep())
 
         self.robot_node = self.getSelf()
@@ -34,7 +31,8 @@ class RobotClient(Supervisor):
         self.left_motor.setPosition(float("inf"))
         self.right_motor.setPosition(float("inf"))
 
-        self.l = 0.12  # Distance between wheels
+        """ Distance between wheels """
+        self.l = 0.12
 
         """ Store initial position for resetting """
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
@@ -72,21 +70,10 @@ class RobotClient(Supervisor):
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
-        # try:
-        #     with open(self.r_path, "rb") as f:
-        #         return np.array(pickle.load(f), dtype=np.float32)
-        # except Exception as e:
-        #     print(f"Error getting action: {e}")
 
     def send_observation(self, obs: np.ndarray) -> None:
         """Open pipe and send observation to server"""
         self.socket.send_pyobj(obs)
-        # try:
-        #     with open(self.w_path, "wb") as f:
-        #         pickle.dump(obs, f)
-        #         f.flush()
-        # except Exception as e:
-        #     print(f"Error sending observation: {e}")
 
     def update_motors(self, action: np.ndarray) -> None:
         """

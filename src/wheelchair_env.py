@@ -1,6 +1,6 @@
-import pickle
 import gymnasium as gym
 import numpy as np
+from sklearn.cluster import DBSCAN
 import zmq
 
 
@@ -71,6 +71,8 @@ class WheelchairEnv(gym.Env):
 
         reward = r_distance + r_collision
 
+        reward += self.dual_reward(obs, action)
+
         return reward
 
     def collision_reward(self):
@@ -82,24 +84,50 @@ class WheelchairEnv(gym.Env):
         # when in fact it is not
         return 0
 
+    def dual_reward(self, obs, action):
+        clusters = self.cluster_lidar_readings(obs)
+        n = len(clusters)
+
+        for cluster in clusters:
+            print(cluster)
+
+    def cluster_lidar_readings(lidar, fov=360):
+        """
+        Clusters LIDAR readings based on spatial proximity.
+
+        :param lidar_readings: NumPy array of shape (180,) with distance values.
+        :param fov: Field of view (degrees), typically 180 for each robot.
+        :return: List of clusters (each cluster is a list of indices in lidar_readings).
+        """
+        n_rays = len(lidar)
+        angles = np.linspace(-fov / 2, fov / 2, n_rays)
+
+        # Convert polar to Cartesian coordinates
+        x = lidar * np.cos(np.radians(angles))
+        y = lidar * np.sin(np.radians(angles))
+        points = np.column_stack((x, y))
+
+        # Cluster points using dbscan
+        dbscan = DBSCAN(eps=0.1, min_samples=3)
+        labels = dbscan.fit_predict(points)
+
+        # Extract clusters
+        clusters = {}
+        for i, label in enumerate(labels):
+            if label == -1:
+                continue  # Ignore noise points
+            if label not in clusters:
+                clusters[label] = []
+            clusters[label].append(i)
+
+        return list(clusters.values())
+
     def send_action_get_obs(self, action) -> np.ndarray:
         self.socket.send_pyobj(action)
         return self.get_observation()
-        # try:
-        #     with open(self.w_path, "wb") as f:
-        #         pickle.dump(action, f)
-        #         f.flush()
-        # except Exception as e:
-        #     print(f"Error sending action: {e}")
 
     def get_observation(self) -> np.ndarray:
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
-        # try:
-        #     with open(self.r_path, "rb") as f:
-        #         return pickle.load(f)
-        # except Exception as e:
-        #     print(f"Error getting observation: {e}")
-        #     return self.prev_obs
 
     def no_obs(self):
         return np.full(self.obs_shape, 10.0)

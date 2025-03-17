@@ -3,7 +3,7 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/devices/robotis/protos/RobotisLds01.proto"
+EXTERNPROTO "../protos/RobotisLds01.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
@@ -12,8 +12,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.540873354822319 0.5412990447000119 0.643778966921182 1.9968974407795024
-  position -1.4189324898334648 -5.585800211171724 11.407132995199087
+  orientation 0.5528202409750798 -0.5953041667922082 -0.5830975305796531 4.2629684687378395
+  position -2.94804132720979 -5.282629588957188 8.4107099828635
 }
 TexturedBackground {
   skyColor [
@@ -35,7 +35,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -62,7 +62,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -89,7 +89,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -116,7 +116,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -143,7 +143,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -170,7 +170,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -197,7 +197,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
@@ -224,7 +224,7 @@ DEF Giorgio TurtleBot3Burger {
       name "Bumper"
       boundingObject Cylinder {
         height 0.1
-        radius 0.09
+        radius 0.11
       }
     }
     Receiver {
