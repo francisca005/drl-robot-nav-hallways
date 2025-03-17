@@ -2,11 +2,17 @@ from controller import Supervisor
 import pickle
 import numpy as np
 import sys
+import zmq
 
 
 class RobotClient(Supervisor):
     def __init__(self, id: int):
         super(RobotClient, self).__init__()
+
+        context = zmq.Context()
+        self.socket = context.socket(zmq.REP)
+        self.socket.connect("ipc:///tmp/rl/giorgio_" + str(id))
+
         self.r_path = "/tmp/giorgio_" + str(id) + "_obs"
         self.w_path = "/tmp/giorgio_" + str(id) + "_act"
 
@@ -65,20 +71,22 @@ class RobotClient(Supervisor):
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
-        try:
-            with open(self.r_path, "rb") as f:
-                return np.array(pickle.load(f), dtype=np.float32)
-        except Exception as e:
-            print(f"Error getting action: {e}")
+        return np.array(self.socket.recv_pyobj(), dtype=np.float32)
+        # try:
+        #     with open(self.r_path, "rb") as f:
+        #         return np.array(pickle.load(f), dtype=np.float32)
+        # except Exception as e:
+        #     print(f"Error getting action: {e}")
 
     def send_observation(self, obs: np.ndarray) -> None:
         """Open pipe and send observation to server"""
-        try:
-            with open(self.w_path, "wb") as f:
-                pickle.dump(obs, f)
-                f.flush()
-        except Exception as e:
-            print(f"Error sending observation: {e}")
+        self.socket.send_pyobj(obs)
+        # try:
+        #     with open(self.w_path, "wb") as f:
+        #         pickle.dump(obs, f)
+        #         f.flush()
+        # except Exception as e:
+        #     print(f"Error sending observation: {e}")
 
     def update_motors(self, action: np.ndarray) -> None:
         """

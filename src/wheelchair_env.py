@@ -1,11 +1,17 @@
 import pickle
 import gymnasium as gym
 import numpy as np
+import zmq
 
 
 class WheelchairEnv(gym.Env):
     def __init__(self, env_id: int):
         super(WheelchairEnv, self).__init__()
+
+        context = zmq.Context()
+        self.socket = context.socket(zmq.REQ)
+        self.socket.bind("ipc:///tmp/rl/giorgio_" + str(env_id))
+
         self.env_id = env_id
         self.r_path = "/tmp/giorgio_" + str(env_id) + "_act"
         self.w_path = "/tmp/giorgio_" + str(env_id) + "_obs"
@@ -25,17 +31,15 @@ class WheelchairEnv(gym.Env):
         )
 
         self.prev_obs = self.no_obs()
+        self.time_step = 0
+        self.time_limit = 6000
 
     def step(self, action):
-        self.send_action(action)
-
         reward = self.get_reward(self.prev_obs, action)
         done = False
-
-        # TODO: Implement truncated
         truncated = False
 
-        obs_done = self.get_observation()
+        obs_done = self.send_action_get_obs(action)
         obs, term = obs_done[:-1], obs_done[-1]
 
         if term == 1:
@@ -45,6 +49,12 @@ class WheelchairEnv(gym.Env):
             reward += self.goal_reward()
 
         self.prev_obs = obs
+        self.time_step += 1
+
+        if self.time_step >= self.time_limit:
+            done = True
+            truncated = True
+            reward += self.collision_reward()
 
         return obs, reward, done, truncated, {}
 
@@ -67,27 +77,34 @@ class WheelchairEnv(gym.Env):
         return -30
 
     def goal_reward(self):
-        return 30
+        # maybe the agent shouldn't receive a reward for reaching the end of the corridor
+        # because it will be telling the agent that the observation just before the goal is good
+        # when in fact it is not
+        return 0
 
-    def send_action(self, action):
-        try:
-            with open(self.w_path, "wb") as f:
-                pickle.dump(action, f)
-                f.flush()
-        except Exception as e:
-            print(f"Error sending action: {e}")
+    def send_action_get_obs(self, action) -> np.ndarray:
+        self.socket.send_pyobj(action)
+        return self.get_observation()
+        # try:
+        #     with open(self.w_path, "wb") as f:
+        #         pickle.dump(action, f)
+        #         f.flush()
+        # except Exception as e:
+        #     print(f"Error sending action: {e}")
 
-    def get_observation(self):
-        try:
-            with open(self.r_path, "rb") as f:
-                return pickle.load(f)
-        except Exception as e:
-            print(f"Error getting observation: {e}")
-            return self.prev_obs
+    def get_observation(self) -> np.ndarray:
+        return np.array(self.socket.recv_pyobj(), dtype=np.float32)
+        # try:
+        #     with open(self.r_path, "rb") as f:
+        #         return pickle.load(f)
+        # except Exception as e:
+        #     print(f"Error getting observation: {e}")
+        #     return self.prev_obs
 
     def no_obs(self):
         return np.full(self.obs_shape, 10.0)
 
     def reset(self, seed: int = None):
         self.prev_obs = self.no_obs()
+        self.time_step = 0
         return self.prev_obs, {}

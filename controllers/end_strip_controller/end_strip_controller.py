@@ -14,8 +14,7 @@ def run():
         value = touch_sensor.getValue()
 
         if value > 0:
-            print("strip detected collision")
-            message = "collision".encode("utf-8")
+            message = "1".encode("utf-8")
             emitter.send(message)
 
 
