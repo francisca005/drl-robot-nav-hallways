@@ -13,7 +13,7 @@ class RobotClient(Supervisor):
 
         context = zmq.Context()
         self.socket = context.socket(zmq.REP)
-        self.socket.connect("ipc:///tmp/rl/giorgio_" + str(id))
+        self.socket.connect("ipc:///tmp/giorgio_" + str(id))
 
         self.timestep = int(self.getBasicTimeStep())
 
@@ -27,6 +27,8 @@ class RobotClient(Supervisor):
 
         self.receiver = self.getDevice("Receiver")
         self.receiver.enable(self.timestep)
+
+        self.emitter = self.getDevice("Emitter")
 
         self.left_motor = self.getDevice("left wheel motor")
         self.right_motor = self.getDevice("right wheel motor")
@@ -93,7 +95,13 @@ class RobotClient(Supervisor):
 
     def detect_collision(self) -> bool:
         """Bumper value is 1 if collision is detected, else 0"""
-        return self.bumper.getValue() == 1
+        collided = self.bumper.getValue() == 1
+
+        if collided:
+            message = "collision".encode("utf-8")
+            self.emitter.send(message)
+
+        return collided
 
     def detect_end(self) -> bool:
         """
@@ -101,6 +109,7 @@ class RobotClient(Supervisor):
         Note that in the Webots world, the end strip sends messages in the same channel that the robot is listening
         And, of course, robots and strips on different corridors use different channels
         """
+
         return self.receiver.getQueueLength() > 0
 
 

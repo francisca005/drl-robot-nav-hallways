@@ -4,7 +4,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from wheelchair_env import WheelchairEnv
 
 TRAIN_STEPS = 500_000
-N_ROBOTS = 5
+N_ROBOTS = 2
 
 
 def train_model():

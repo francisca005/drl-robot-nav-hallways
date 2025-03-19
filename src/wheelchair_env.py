@@ -10,11 +10,9 @@ class WheelchairEnv(gym.Env):
 
         context = zmq.Context()
         self.socket = context.socket(zmq.REQ)
-        self.socket.bind("ipc:///tmp/rl/giorgio_" + str(env_id))
+        self.socket.bind("ipc:///tmp/giorgio_" + str(env_id))
 
         self.env_id = env_id
-        self.r_path = "/tmp/giorgio_" + str(env_id) + "_act"
-        self.w_path = "/tmp/giorgio_" + str(env_id) + "_obs"
 
         """ 
         Action and state space definition.
@@ -74,13 +72,13 @@ class WheelchairEnv(gym.Env):
 
         # Collision penalty (if min_range is below a threshold)
         min_range = np.min(obs)
-        min_threshold = 0.3
+        min_threshold = 0.4
         r_collision = -np.exp(10 * min_range) if min_range < min_threshold else 0
 
         r_direction = self.direction_reward(obs, action)
 
         reward = r_distance + r_collision + r_direction
-        reward += self.dual_reward(obs, action)
+        reward += self.dual_reward(obs)
 
         return reward
 
@@ -102,7 +100,7 @@ class WheelchairEnv(gym.Env):
         return 2 if action[1] < 0 else -2
 
     def collision_reward(self):
-        return -30
+        return -100
 
     def goal_reward(self):
         # maybe the agent shouldn't receive a reward for reaching the end of the corridor
@@ -110,17 +108,68 @@ class WheelchairEnv(gym.Env):
         # when in fact it is not
         return 0
 
-    def dual_reward(self, obs, action) -> int:
-        # clusters = self.cluster_lidar_readings(obs)
-        # n = len(clusters)
+    def dual_reward(self, obs) -> int:
+        """
+        Calculates a reward based on the presence of small clusters of points
+        directly to the left (80° to 100°) or right (260° to 280°), indicating
+        adjacency to another robot.
 
-        # print("-" * 20)
-        # for cluster in clusters:
-        #     print(cluster)
+        :param obs: LIDAR readings (NumPy array of shape (360,))
+        :param action: Current action taken by the robot
+        :return: Reward value (positive for adjacency)
+        """
+        clusters = self.cluster_lidar_readings(obs)
 
-        # print("-" * 20)
+        right_range = (80, 100)
+        left_range = (260, 280)
 
-        return 0
+        adjacency_reward = 0
+
+        """ Parameters for filtering clusters """
+        max_cluster_size = 10
+        max_angular_spread = 20
+        max_distance_spread = 0.5
+        min_length = 0.05
+        max_length = 0.15
+
+        for cluster in clusters:
+            """Extract distances and angles for the cluster"""
+            cluster_distances = obs[cluster]
+            cluster_angles = np.radians(cluster)
+
+            """ Convert to Cartesian coordinates """
+            x = cluster_distances * np.cos(cluster_angles)
+            y = cluster_distances * np.sin(cluster_angles)
+
+            """ Calculate the length of the object that the cluster represents """
+            if len(x) > 1:
+                length = np.sqrt((x.max() - x.min()) ** 2 + (y.max() - y.min()) ** 2)
+            else:
+                length = 0
+
+            """ Calculate the mean angle, angular spread, and distance spread of the cluster """
+            mean_angle = np.mean(cluster)
+            angular_spread = max(cluster) - min(cluster)
+            distance_spread = max(cluster_distances) - min(cluster_distances)
+
+            if (
+                len(cluster) <= max_cluster_size
+                and angular_spread <= max_angular_spread
+                and distance_spread <= max_distance_spread
+                and min_length <= length <= max_length
+            ):
+                if left_range[0] <= mean_angle <= left_range[1]:
+                    print(
+                        f"Bot {self.env_id} detected another bot on its leftt with length {length:.2f}m"
+                    )
+                    adjacency_reward += 3
+                elif right_range[0] <= mean_angle <= right_range[1]:
+                    print(
+                        f"Bot {self.env_id} detected another bot on its right with length {length:.2f}m"
+                    )
+                    adjacency_reward += 3
+
+        return adjacency_reward
 
     def cluster_lidar_readings(self, lidar, fov=360):
         """

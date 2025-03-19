@@ -14,7 +14,7 @@ def run():
         value = touch_sensor.getValue()
 
         if value > 0:
-            message = "1".encode("utf-8")
+            message = "end".encode("utf-8")
             emitter.send(message)
 
 
