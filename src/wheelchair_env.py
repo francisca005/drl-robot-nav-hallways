@@ -123,7 +123,7 @@ class WheelchairEnv(gym.Env):
         right_range = (80, 100)
         left_range = (260, 280)
 
-        adjacency_reward = 0
+        adjacency_reward = -1
 
         """ Parameters for filtering clusters """
         max_cluster_size = 10
@@ -162,12 +162,12 @@ class WheelchairEnv(gym.Env):
                     print(
                         f"Bot {self.env_id} detected another bot on its leftt with length {length:.2f}m"
                     )
-                    adjacency_reward += 3
+                    adjacency_reward = 3
                 elif right_range[0] <= mean_angle <= right_range[1]:
                     print(
                         f"Bot {self.env_id} detected another bot on its right with length {length:.2f}m"
                     )
-                    adjacency_reward += 3
+                    adjacency_reward = 3
 
         return adjacency_reward
 
