@@ -1,3 +1,4 @@
+from typing import Tuple, List
 import gymnasium as gym
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -39,7 +40,7 @@ class WheelchairEnv(gym.Env):
         self.time_step = 0
         self.time_limit = 6000
 
-    def step(self, action):
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
         action = self.to_action(action)
         reward = self.get_reward(self.prev_obs, action)
         done = False
@@ -64,15 +65,15 @@ class WheelchairEnv(gym.Env):
 
         return obs, reward, done, truncated, {}
 
-    def get_reward(self, obs, action):
-        v, w = action
+    def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
+        v = action[0]
 
         # Reward for moving forward
         r_distance = 1 if v > 0 else -1
 
         # Collision penalty (if min_range is below a threshold)
         min_range = np.min(obs)
-        min_threshold = 0.4
+        min_threshold = 0.3
         r_collision = -np.exp(10 * min_range) if min_range < min_threshold else 0
 
         r_direction = self.direction_reward(obs, action)
@@ -82,7 +83,9 @@ class WheelchairEnv(gym.Env):
 
         return reward
 
-    def direction_reward(self, obs, action):
+    def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
+        v, w = action
+
         left = np.array(obs[90:178])
         front = np.array(obs[178:183])
         right = np.array(obs[183:270])
@@ -93,22 +96,24 @@ class WheelchairEnv(gym.Env):
 
         """ Check which direction has the most free space and reward movement in that direction """
         if max(left_max, front_max, right_max) == front_max:
-            return 2 if action[0] > 0 else -2
+            return 2 if v > 0 else -2
         elif max(left_max, front_max, right_max) == left_max:
-            return 2 if action[1] > 0 else -2
+            return 2 if w > 0 else -2
 
-        return 2 if action[1] < 0 else -2
+        return 2 if w < 0 else -2
 
-    def collision_reward(self):
+    def collision_reward(self) -> int:
         return -100
 
-    def goal_reward(self):
-        # maybe the agent shouldn't receive a reward for reaching the end of the corridor
-        # because it will be telling the agent that the observation just before the goal is good
-        # when in fact it is not
+    def goal_reward(self) -> int:
+        """
+        Maybe the agent shouldn't receive a reward for reaching the end of the corridor,
+        because it will be telling the agent that the observation just before the goal is good,
+        when in fact it is not
+        """
         return 0
 
-    def dual_reward(self, obs) -> int:
+    def dual_reward(self, obs: np.ndarray) -> int:
         """
         Calculates a reward based on the presence of small clusters of points
         directly to the left (80° to 100°) or right (260° to 280°), indicating
@@ -120,8 +125,8 @@ class WheelchairEnv(gym.Env):
         """
         clusters = self.cluster_lidar_readings(obs)
 
-        right_range = (80, 100)
-        left_range = (260, 280)
+        left_range = (80, 100)
+        right_range = (260, 280)
 
         adjacency_reward = -1
 
@@ -151,27 +156,34 @@ class WheelchairEnv(gym.Env):
             mean_angle = np.mean(cluster)
             angular_spread = max(cluster) - min(cluster)
             distance_spread = max(cluster_distances) - min(cluster_distances)
+            max_dist = max(cluster_distances)
+            max_dist_limit = 1
 
             if (
                 len(cluster) <= max_cluster_size
                 and angular_spread <= max_angular_spread
                 and distance_spread <= max_distance_spread
                 and min_length <= length <= max_length
+                and max_dist <= max_dist_limit
             ):
                 if left_range[0] <= mean_angle <= left_range[1]:
                     print(
                         f"Bot {self.env_id} detected another bot on its leftt with length {length:.2f}m"
                     )
+                    print(f"cluster: {cluster}")
                     adjacency_reward = 3
                 elif right_range[0] <= mean_angle <= right_range[1]:
                     print(
                         f"Bot {self.env_id} detected another bot on its right with length {length:.2f}m"
                     )
+                    print(f"cluster: {cluster}")
                     adjacency_reward = 3
 
         return adjacency_reward
 
-    def cluster_lidar_readings(self, lidar, fov=360):
+    def cluster_lidar_readings(
+        self, lidar: np.ndarray, fov: int = 360
+    ) -> List[List[int]]:
         """
         Clusters LIDAR readings based on spatial proximity.
 
@@ -182,16 +194,13 @@ class WheelchairEnv(gym.Env):
         n_rays = len(lidar)
         angles = np.linspace(-fov / 2, fov / 2, n_rays)
 
-        # Convert polar to Cartesian coordinates
         x = lidar * np.cos(np.radians(angles))
         y = lidar * np.sin(np.radians(angles))
         points = np.column_stack((x, y))
 
-        # Cluster points using dbscan
         dbscan = DBSCAN(eps=0.1, min_samples=3)
         labels = dbscan.fit_predict(points)
 
-        # Extract clusters
         clusters = {}
         for i, label in enumerate(labels):
             if label == -1:
@@ -202,17 +211,17 @@ class WheelchairEnv(gym.Env):
 
         return list(clusters.values())
 
-    def send_action_get_obs(self, action) -> np.ndarray:
+    def send_action_get_obs(self, action: Tuple[int, int]) -> np.ndarray:
         self.socket.send_pyobj(action)
         return self.get_observation()
 
     def get_observation(self) -> np.ndarray:
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
 
-    def no_obs(self):
+    def no_obs(self) -> np.ndarray:
         return np.full(self.obs_shape, 10.0)
 
-    def reset(self, seed: int = None):
+    def reset(self, seed: int = None) -> Tuple[np.ndarray, dict]:
         self.prev_obs = self.no_obs()
         self.time_step = 0
         return self.prev_obs, {}
