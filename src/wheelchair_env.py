@@ -22,13 +22,16 @@ class WheelchairEnv(gym.Env):
         """
         self.obs_shape = (360,)
         self.action_space = gym.spaces.Discrete(5)
+
+        v = 2
+        w = 3.5
         self.to_action = lambda x: (
             [
-                [2, 0],  # Forward
-                [2, 2],  # Forward and left
-                [2, -2],  # Forward and right
-                [0.5, 2],  # Left
-                [0.5, -2],  # Right
+                [v, 0],  # Forward
+                [v, w],  # Forward and left
+                [v, -w],  # Forward and right
+                [0, w],  # Left
+                [0, -w],  # Right
             ]
         )[x]
 
@@ -61,7 +64,8 @@ class WheelchairEnv(gym.Env):
         if self.time_step >= self.time_limit:
             done = True
             truncated = True
-            reward += self.collision_reward()
+            print(f"Time limit reached for robot {self.env_id}")
+            # reward += self.collision_reward()
 
         return obs, reward, done, truncated, {}
 
@@ -167,16 +171,8 @@ class WheelchairEnv(gym.Env):
                 and max_dist <= max_dist_limit
             ):
                 if left_range[0] <= mean_angle <= left_range[1]:
-                    print(
-                        f"Bot {self.env_id} detected another bot on its leftt with length {length:.2f}m"
-                    )
-                    print(f"cluster: {cluster}")
                     adjacency_reward = 3
                 elif right_range[0] <= mean_angle <= right_range[1]:
-                    print(
-                        f"Bot {self.env_id} detected another bot on its right with length {length:.2f}m"
-                    )
-                    print(f"cluster: {cluster}")
                     adjacency_reward = 3
 
         return adjacency_reward

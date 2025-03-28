@@ -1,5 +1,4 @@
 from controller import Supervisor
-import pickle
 import numpy as np
 import sys
 import zmq
