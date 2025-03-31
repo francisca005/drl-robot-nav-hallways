@@ -182,36 +182,6 @@ class WheelchairEnv(gym.Env):
 
         return adjacency_reward
 
-    def cluster_lidar_readings(
-        self, lidar: np.ndarray, fov: int = 360
-    ) -> List[List[int]]:
-        """
-        Clusters LIDAR readings based on spatial proximity.
-
-        :param lidar_readings: NumPy array of shape (360,) with distance values.
-        :param fov: Field of view (degrees), typically 360 for each robot.
-        :return: List of clusters (each cluster is a list of indices in lidar_readings).
-        """
-        n_rays = len(lidar)
-        angles = np.linspace(-fov / 2, fov / 2, n_rays)
-
-        x = lidar * np.cos(np.radians(angles))
-        y = lidar * np.sin(np.radians(angles))
-        points = np.column_stack((x, y))
-
-        dbscan = DBSCAN(eps=0.1, min_samples=3)
-        labels = dbscan.fit_predict(points)
-
-        clusters = {}
-        for i, label in enumerate(labels):
-            if label == -1:
-                continue  # Ignore noise points
-            if label not in clusters:
-                clusters[label] = []
-            clusters[label].append(i)
-
-        return list(clusters.values())
-
     def send_action_get_obs(self, action: Tuple[int, int]) -> np.ndarray:
         self.socket.send_pyobj(action)
         return self.get_observation()
