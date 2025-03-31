@@ -20,11 +20,21 @@ class WheelchairEnv(gym.Env):
         Robot will be able to control speed of left and right wheels between 0 and 5.
         State is a vector of 360 lidar readings.
         """
-        self.obs_shape = (360,)
-        self.action_space = gym.spaces.Discrete(5)
+        self.obs_shape = (28,)
+        self.action_space = gym.spaces.Discrete(6)
 
-        v = 2
-        w = 3.5
+        """
+        Lidar readings are divided into 8 regions, each covering 20 degrees in front of the robot.
+        Left and right readings are included to check for adjacency to other robots.
+        """
+        self.regions = [(90 + i * 20, 110 + i * 20) for i in range(8)]
+        self.left = (85, 95)
+        self.left_index = (8, 18)
+        self.right = (265, 275)
+        self.right_index = (18, 28)
+
+        v = 4
+        w = 1
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
@@ -32,6 +42,7 @@ class WheelchairEnv(gym.Env):
                 [v, -w],  # Forward and right
                 [0, w],  # Left
                 [0, -w],  # Right
+                [0, 0],  # Stop
             ]
         )[x]
 
@@ -44,13 +55,19 @@ class WheelchairEnv(gym.Env):
         self.time_limit = 6000
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
+        """
+        Takes an action and returns the next observation, reward, done flag, and info.
+        :param action: Action to be taken (int)
+        :return: Tuple of (observation, reward, done, info)
+        """
+
         action = self.to_action(action)
         reward = self.get_reward(self.prev_obs, action)
+
         done = False
         truncated = False
 
-        obs_done = self.send_action_get_obs(action)
-        obs, term = obs_done[:-1], obs_done[-1]
+        obs, term = self.send_action_get_obs(action)
 
         if term == 1:
             reward += self.collision_reward()
@@ -65,49 +82,46 @@ class WheelchairEnv(gym.Env):
             done = True
             truncated = True
             print(f"Time limit reached for robot {self.env_id}")
-            # reward += self.collision_reward()
 
         return obs, reward, done, truncated, {}
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
         v = action[0]
 
-        # Reward for moving forward
+        """ Reward for moving forward """
         r_distance = 1 if v > 0 else -1
 
-        # Collision penalty (if min_range is below a threshold)
+        """ Collision penalty, exponential on distance if below a threshold """
         min_range = np.min(obs)
         min_threshold = 0.3
-        r_collision = -np.exp(10 * min_range) if min_range < min_threshold else 0
+        r_collision = -np.exp(3 * (1 - min_range)) if min_range < min_threshold else 0
 
         r_direction = self.direction_reward(obs, action)
 
-        reward = r_distance + r_collision + r_direction
-        reward += self.dual_reward(obs)
+        r_dual = self.dual_reward(obs)
+        reward = r_distance + r_collision + r_direction + r_dual
 
         return reward
 
     def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
         v, w = action
 
-        left = np.array(obs[90:178])
-        front = np.array(obs[178:183])
-        right = np.array(obs[183:270])
-
-        left_max = np.max(left)
-        front_max = np.max(front)
-        right_max = np.max(right)
+        half = len(self.regions) // 2
+        left = obs[half]
+        front = obs[half + 1]
+        right = obs[half + 2]
 
         """ Check which direction has the most free space and reward movement in that direction """
-        if max(left_max, front_max, right_max) == front_max:
-            return 2 if v > 0 else -2
-        elif max(left_max, front_max, right_max) == left_max:
-            return 2 if w > 0 else -2
+        r = 2
+        if max(left, front, right) == front:
+            return r if v > 0 else -r
+        elif max(left, front, right) == left:
+            return r if w > 0 else -r
 
-        return 2 if w < 0 else -2
+        return r if w < 0 else -r
 
     def collision_reward(self) -> int:
-        return -100
+        return -10
 
     def goal_reward(self) -> int:
         """
@@ -119,61 +133,52 @@ class WheelchairEnv(gym.Env):
 
     def dual_reward(self, obs: np.ndarray) -> int:
         """
-        Calculates a reward based on the presence of small clusters of points
-        directly to the left (80° to 100°) or right (260° to 280°), indicating
-        adjacency to another robot.
+        Calculates a reward based on the detection of another robot to the left or right of this robot.
 
         :param obs: LIDAR readings (NumPy array of shape (360,))
         :param action: Current action taken by the robot
         :return: Reward value (positive for adjacency)
         """
-        clusters = self.cluster_lidar_readings(obs)
 
-        left_range = (80, 100)
-        right_range = (260, 280)
+        ls, le = self.left_index
+        rs, re = self.right_index
 
-        adjacency_reward = -1
+        clusters = [obs[ls:le], obs[rs:re]]
+
+        adjacency_reward = 0  # Initialize to 0 for no adjacency
 
         """ Parameters for filtering clusters """
-        max_cluster_size = 10
-        max_angular_spread = 20
         max_distance_spread = 0.5
         min_length = 0.05
         max_length = 0.15
 
-        for cluster in clusters:
-            """Extract distances and angles for the cluster"""
-            cluster_distances = obs[cluster]
-            cluster_angles = np.radians(cluster)
+        for i, cluster in enumerate(clusters):
+            rng = self.left if i == 0 else self.right
+            angles = np.linspace(rng[0], rng[1], len(cluster))
+            angles = np.radians(angles)
 
-            """ Convert to Cartesian coordinates """
-            x = cluster_distances * np.cos(cluster_angles)
-            y = cluster_distances * np.sin(cluster_angles)
+            """Convert to Cartesian coordinates"""
+            x = cluster * np.cos(angles)
+            y = cluster * np.sin(angles)
 
             """ Calculate the length of the object that the cluster represents """
-            if len(x) > 1:
-                length = np.sqrt((x.max() - x.min()) ** 2 + (y.max() - y.min()) ** 2)
-            else:
-                length = 0
+            length = (
+                np.sqrt((x.max() - x.min()) ** 2 + (y.max() - y.min()) ** 2)
+                if len(x) > 1
+                else 0
+            )
 
             """ Calculate the mean angle, angular spread, and distance spread of the cluster """
-            mean_angle = np.mean(cluster)
-            angular_spread = max(cluster) - min(cluster)
-            distance_spread = max(cluster_distances) - min(cluster_distances)
-            max_dist = max(cluster_distances)
+            distance_spread = max(cluster) - min(cluster)
+            max_dist = max(cluster)
             max_dist_limit = 1
 
             if (
-                len(cluster) <= max_cluster_size
-                and angular_spread <= max_angular_spread
-                and distance_spread <= max_distance_spread
+                distance_spread <= max_distance_spread
                 and min_length <= length <= max_length
                 and max_dist <= max_dist_limit
             ):
-                if left_range[0] <= mean_angle <= left_range[1]:
-                    adjacency_reward = 3
-                elif right_range[0] <= mean_angle <= right_range[1]:
-                    adjacency_reward = 3
+                adjacency_reward = 3
 
         return adjacency_reward
 
@@ -212,7 +217,25 @@ class WheelchairEnv(gym.Env):
         return self.get_observation()
 
     def get_observation(self) -> np.ndarray:
-        return np.array(self.socket.recv_pyobj(), dtype=np.float32)
+        raw_full = np.array(self.socket.recv_pyobj(), dtype=np.float32)
+        raw, term = raw_full[:-1], raw_full[-1]
+        obs = np.zeros(self.obs_shape)
+
+        for i, region in enumerate(self.regions):
+            start, end = region
+            obs[i] = np.min(raw[start:end])
+
+        last = len(self.regions)
+        for i in range(self.left[0], self.left[1]):
+            j = i - self.left[0]
+            obs[last + j] = raw[i]
+
+        last += self.left[1] - self.left[0]
+        for i in range(self.right[0], self.right[1]):
+            j = i - self.right[0]
+            obs[last + j] = raw[i]
+
+        return obs, term
 
     def no_obs(self) -> np.ndarray:
         return np.full(self.obs_shape, 10.0)
