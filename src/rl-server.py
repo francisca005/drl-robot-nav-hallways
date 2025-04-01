@@ -3,7 +3,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from wheelchair_env import WheelchairEnv
 
-TRAIN_STEPS = 2_000_000
+TRAIN_STEPS = 10_000_000
 N_ROBOTS = 4
 
 
