@@ -12,8 +12,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5349935318798162 0.5408609488044965 0.6490387930663774 1.9802099967544784
-  position -3.2215309490837534 -6.084182489214727 13.36131649548365
+  orientation -0.580368377530164 0.5801695462853876 0.5714681477790451 2.103535951107896
+  position 0.07995160508427952 -3.5500582011858905 13.543138874822167
 }
 TexturedBackground {
   skyColor [
@@ -83,7 +83,7 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -3.01041 -4.5 -0.000247065
+  translation 1.51889 -4.58566 -0.000205941
   rotation 0.002315935868123677 -0.002369048213874898 0.9999945120107485 1.5520359870898914
   name "Giorgio 2"
   controller "robot_client"
@@ -114,8 +114,8 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -2.57138 -4.5 -0.000248338
-  rotation 0.002315935868117999 -0.002369048213869063 0.9999945120107486 1.5520359870898588
+  translation 2.01763 -4.58612 -0.000248338
+  rotation 0 0 1 1.5520359870898588
   name "Giorgio 3"
   controller "robot_client"
   controllerArgs [
@@ -145,8 +145,6 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  hidden rotation_10 0 -1 0 1.5707959812395615
-  hidden rotation_11 -0.7071047810675083 -3.844380823678736e-16 -0.7071087812999295 3.141588
   translation -1.2300090788056695 -4.503402252243147 -0.00024785601964424225
   rotation 0.0023155291309820375 -0.002324514106914263 0.9999946174650193 1.5711540890326257
   name "Giorgio 4"
@@ -201,8 +199,6 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  hidden rotation_10 0 -1 0 1.5707959812395569
-  hidden rotation_11 -0.7071047810676246 -3.8405394322001837e-16 -0.707108781299813 3.141588
   translation 0.2499909210827555 -4.50339229795428 -0.000247856047675854
   rotation 0.0023155291401616295 -0.0023245141011417375 0.9999946174650115 1.57115409546528
   name "Giorgio 6"
@@ -230,7 +226,7 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation 1.7599449068609425 -4.5014695231710435 -0.000247793081088285
+  translation 3.74977 -4.53911 -0.000229725
   rotation 0.0023159358681174164 -0.002369048213867623 0.9999945120107486 1.5520359870899012
   name "Giorgio 8"
   controller "<none>"
@@ -257,8 +253,6 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  hidden rotation_10 0 -1 0 1.570795981224865
-  hidden rotation_11 -0.707104781071152 -3.724465024986872e-16 -0.7071087812962856 3.141588
   translation 0.2731029214334222 -1.5692421542908084 -0.00024785595957640266
   rotation 0.0023155291112882488 -0.0023245141192599944 0.9999946174650364 1.571154075248324
   name "Giorgio 7"
@@ -315,7 +309,7 @@ DEF End_Strip Robot {
   controller "end_strip_controller"
 }
 DEF End_Strip Robot {
-  translation -2.75 -2.16 0.03
+  translation 1.77 -2.16 0.03
   children [
     Shape {
       appearance Appearance {
@@ -396,7 +390,7 @@ DEF End_Strip Robot {
   controller "<none>"
 }
 DEF End_Strip Robot {
-  translation 1.74 -2.16 0.03
+  translation 3.33 -2.16 0.03
   children [
     Shape {
       appearance Appearance {

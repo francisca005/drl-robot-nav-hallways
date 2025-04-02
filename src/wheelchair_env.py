@@ -34,7 +34,7 @@ class WheelchairEnv(gym.Env):
         self.right_index = (18, 28)
 
         v = 4
-        w = 1
+        w = 3
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
@@ -86,20 +86,22 @@ class WheelchairEnv(gym.Env):
         return obs, reward, done, truncated, {}
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
-        v = action[0]
+        v, w = action
 
         """ Reward for moving forward """
         r_distance = 1 if v > 0 else -1
 
+        r_still = -3 if v == 0 and w == 0 else 0
+
         """ Collision penalty, exponential on distance if below a threshold """
         min_range = np.min(obs)
-        min_threshold = 0.3
+        min_threshold = 0.4
         r_collision = -np.exp(3 * (1 - min_range)) if min_range < min_threshold else 0
 
         r_direction = self.direction_reward(obs, action)
 
         r_dual = self.dual_reward(obs)
-        reward = r_distance + r_collision + r_direction + r_dual
+        reward = r_distance + r_collision + r_direction + r_dual + r_still
 
         return reward
 
@@ -121,7 +123,7 @@ class WheelchairEnv(gym.Env):
         return r if w < 0 else -r
 
     def collision_reward(self) -> int:
-        return -10
+        return -100
 
     def goal_reward(self) -> int:
         """
@@ -172,11 +174,14 @@ class WheelchairEnv(gym.Env):
             distance_spread = max(cluster) - min(cluster)
             max_dist = max(cluster)
             max_dist_limit = 1
+            min_dist = min(cluster)
+            min_dist_limit = 0.4
 
             if (
                 distance_spread <= max_distance_spread
                 and min_length <= length <= max_length
                 and max_dist <= max_dist_limit
+                and min_dist >= min_dist_limit
             ):
                 adjacency_reward = 3
 
