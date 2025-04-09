@@ -33,8 +33,8 @@ class WheelchairEnv(gym.Env):
         self.right = (265, 275)
         self.right_index = (18, 28)
 
-        v = 4
-        w = 3
+        v = 3.5
+        w = 3.5
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
@@ -79,9 +79,10 @@ class WheelchairEnv(gym.Env):
         self.time_step += 1
 
         if self.time_step >= self.time_limit:
-            done = True
-            truncated = True
-            print(f"Time limit reached for robot {self.env_id}")
+            # done = True
+            # truncated = True
+            # print(f"Time limit reached for robot {self.env_id}")
+            pass
 
         return obs, reward, done, truncated, {}
 
@@ -89,18 +90,26 @@ class WheelchairEnv(gym.Env):
         v, w = action
 
         """ Reward for moving forward """
-        r_distance = 1 if v > 0 else -1
+        r_distance = 1 if v > 0 else 0
 
         r_still = -3 if v == 0 and w == 0 else 0
 
         """ Collision penalty, exponential on distance if below a threshold """
         min_range = np.min(obs)
-        min_threshold = 0.4
-        r_collision = -np.exp(3 * (1 - min_range)) if min_range < min_threshold else 0
+        min_threshold = 0.6
+        r_collision = (
+            -np.exp(4 * (min_threshold - min_range)) if min_range < min_threshold else 0
+        )
 
-        r_direction = self.direction_reward(obs, action)
+        # r_direction = self.direction_reward(obs, action)
+        r_direction = 0
 
-        r_dual = self.dual_reward(obs)
+        # r_dual = self.dual_reward(obs)
+        r_dual = 0
+        if r_dual > 0:
+            print(f"Robot {self.env_id} detected adjacency")
+            r_dual = 0
+
         reward = r_distance + r_collision + r_direction + r_dual + r_still
 
         return reward
@@ -109,21 +118,21 @@ class WheelchairEnv(gym.Env):
         v, w = action
 
         half = len(self.regions) // 2
-        left = obs[half]
+        right = obs[half + 1]
         front = obs[half + 1]
-        right = obs[half + 2]
+        left = obs[half + 2]
 
         """ Check which direction has the most free space and reward movement in that direction """
-        r = 2
-        if max(left, front, right) == front:
-            return r if v > 0 else -r
+        r = 1
+        if max(left, front, right) == right:
+            return r if w < 0 else 0
         elif max(left, front, right) == left:
-            return r if w > 0 else -r
+            return r if w > 0 else 0
 
-        return r if w < 0 else -r
+        return r if v > 0 else 0
 
     def collision_reward(self) -> int:
-        return -100
+        return -10
 
     def goal_reward(self) -> int:
         """

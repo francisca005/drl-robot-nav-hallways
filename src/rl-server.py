@@ -4,7 +4,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from wheelchair_env import WheelchairEnv
 
-TRAIN_STEPS = 500_000
+TRAIN_STEPS = 1_000_000
 N_ROBOTS = 4
 
 
@@ -22,13 +22,14 @@ def train_model(new=False):
 
         prev_model = os.path.exists("./models/dqn_wheelchair.zip")
 
-        if new and prev_model:
-            print("Deleting previous model")
-            os.remove("./models/dqn_wheelchair.zip")
-        elif prev_model:
+        if prev_model and not new:
             print("Loading previous model")
             model = DQN.load("./models/dqn_wheelchair", env)
         else:
+            if prev_model:
+                print("Deleting previous model")
+                os.remove("./models/dqn_wheelchair.zip")
+
             print("Creating new model")
             model = DQN(
                 "MlpPolicy",
