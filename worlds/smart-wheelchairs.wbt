@@ -12,8 +12,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.580368377530164 0.5801695462853876 0.5714681477790451 2.103535951107896
-  position 0.07995160508427952 -3.5500582011858905 13.543138874822167
+  orientation -0.5810682494272553 0.5815957189524481 0.5693031786348376 2.105727384169264
+  position -1.9596862371380628 -3.187346703432108 8.29398042258177
 }
 TexturedBackground {
   skyColor [
@@ -21,8 +21,8 @@ TexturedBackground {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -4.44204 -4.5 -0.00025297
-  rotation 0.0021573400648274834 -0.002111975254897746 0.9999954427117992 1.5982137234360263
+  translation -4.26204 -4.5 -0.00025297
+  rotation 0 0 1 1.5707963267948966
   name "Giorgio 0"
   controller "robot_client"
   controllerArgs [
@@ -52,8 +52,8 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -4.00813 -4.5 -0.000245087
-  rotation 0.0023793629941614015 -0.002397067212228552 0.9999942963339951 1.5681153589480228
+  translation -2.73813 -4.50357 -0.000230756
+  rotation 0 0 1 1.5707963267948966
   name "Giorgio 1"
   controller "robot_client"
   controllerArgs [
@@ -63,7 +63,7 @@ DEF Giorgio TurtleBot3Burger {
   extensionSlot [
     Emitter {
       name "Emitter"
-      channel 1
+      channel 2
     }
     RobotisLds01 {
       name "Lidar"
@@ -78,13 +78,13 @@ DEF Giorgio TurtleBot3Burger {
     }
     Receiver {
       name "Receiver"
-      channel 1
+      channel 2
     }
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation 1.51889 -4.58566 -0.000205941
-  rotation 0.002315935868123677 -0.002369048213874898 0.9999945120107485 1.5520359870898914
+  translation -1.22111 -4.58566 -0.000351456
+  rotation 0.002315935868123677 -0.002369048213874898 0.9999945120107485 1.5708
   name "Giorgio 2"
   controller "robot_client"
   controllerArgs [
@@ -94,7 +94,7 @@ DEF Giorgio TurtleBot3Burger {
   extensionSlot [
     Emitter {
       name "Emitter"
-      channel 2
+      channel 3
     }
     RobotisLds01 {
       name "Lidar"
@@ -109,13 +109,13 @@ DEF Giorgio TurtleBot3Burger {
     }
     Receiver {
       name "Receiver"
-      channel 2
+      channel 3
     }
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation 2.01763 -4.58612 -0.000248338
-  rotation 0 0 1 1.5520359870898588
+  translation 0.26763 -4.58612 -0.000248338
+  rotation 0 0 1 1.5708
   name "Giorgio 3"
   controller "robot_client"
   controllerArgs [
@@ -125,7 +125,7 @@ DEF Giorgio TurtleBot3Burger {
   extensionSlot [
     Emitter {
       name "Emitter"
-      channel 2
+      channel 4
     }
     RobotisLds01 {
       name "Lidar"
@@ -140,12 +140,14 @@ DEF Giorgio TurtleBot3Burger {
     }
     Receiver {
       name "Receiver"
-      channel 2
+      channel 4
     }
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation -1.2300090788056695 -4.503402252243147 -0.00024785601964424225
+  hidden rotation_10 0 -0.9999999999999999 0 1.5707951105828721
+  hidden rotation_11 -0.7071051455714401 1.1990436072366497e-12 -0.7071084167978717 3.141588
+  translation 3.10999 -4.50183 -0.000205305
   rotation 0.0023155291309820375 -0.002324514106914263 0.9999946174650193 1.5711540890326257
   name "Giorgio 4"
   controller "<none>"
@@ -172,6 +174,8 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
+  hidden rotation_10 0 -1 0 1.5707958738639356
+  hidden rotation_11 -0.7071048325107755 1.6889352424133146e-13 -0.7071087298569494 3.141588
   translation -1.2602750924003783 -1.4927895279957581 -0.00024779308770606773
   rotation 0.002315935868604859 -0.002369048359213598 0.9999945120104031 1.5520359183091281
   name "Giorgio 5"
@@ -199,7 +203,9 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation 0.2499909210827555 -4.50339229795428 -0.000247856047675854
+  hidden rotation_10 0 -1 0 1.570795109643377
+  hidden rotation_11 -0.7071051456691404 1.1993651067292419e-12 -0.7071084167001718 3.141588
+  translation 4.34999 -4.50195 -0.000207668
   rotation 0.0023155291401616295 -0.0023245141011417375 0.9999946174650115 1.57115409546528
   name "Giorgio 6"
   controller "<none>"
@@ -226,6 +232,8 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
+  hidden rotation_10 0 -1 0 1.5707958766510777
+  hidden rotation_11 -0.7071048273985033 1.5207121147710302e-13 -0.7071087349691935 3.141588
   translation 3.74977 -4.53911 -0.000229725
   rotation 0.0023159358681174164 -0.002369048213867623 0.9999945120107486 1.5520359870899012
   name "Giorgio 8"
@@ -253,6 +261,8 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
+  hidden rotation_10 0 -1 0 1.5707958738718906
+  hidden rotation_11 -0.7071048325037468 1.6887040723978413e-13 -0.7071087298639782 3.141588
   translation 0.2731029214334222 -1.5692421542908084 -0.00024785595957640266
   rotation 0.0023155291112882488 -0.0023245141192599944 0.9999946174650364 1.571154075248324
   name "Giorgio 7"
@@ -360,7 +370,7 @@ DEF End_Strip Robot {
     }
   ]
   name "robot(2)"
-  controller "<none>"
+  controller "end_strip_controller"
 }
 DEF End_Strip Robot {
   translation 0.25 -2.16 0.03
@@ -387,10 +397,10 @@ DEF End_Strip Robot {
     }
   ]
   name "robot(3)"
-  controller "<none>"
+  controller "end_strip_controller"
 }
 DEF End_Strip Robot {
-  translation 3.33 -2.16 0.03
+  translation -2.75 -2.16 0.03
   children [
     Shape {
       appearance Appearance {
@@ -404,7 +414,7 @@ DEF End_Strip Robot {
     }
     Emitter {
       name "Emitter"
-      channel 5
+      channel 2
     }
     TouchSensor {
       name "Bumper"
@@ -414,7 +424,7 @@ DEF End_Strip Robot {
     }
   ]
   name "robot(4)"
-  controller "<none>"
+  controller "end_strip_controller"
 }
 DEF Scene Group {
   children [
@@ -439,25 +449,25 @@ DEF Scene Group {
       }
     }
     Wall {
-      translation 0.75 -3.31581 -1.77636e-15
+      translation 0.8 -3.31581 -1.77636e-15
       rotation 0 0 1 -1.5707953071795862
       name "(11)"
       size 0.025 0.5 0.5
     }
     Wall {
-      translation -0.25 -3.31581 -1.77636e-15
+      translation -0.29 -3.31581 -1.77636e-15
       rotation 0 0 1 -1.5707953071795862
       name "(10)"
       size 0.025 0.5 0.5
     }
     Wall {
-      translation -1.59729 -3.30612 -1.77636e-15
+      translation -1.60729 -3.30612 -1.77636e-15
       rotation 0 0 1 -1.5707953071795862
       name "(9)"
       size 0.025 0.7 0.5
     }
     Wall {
-      translation -2.39139 -3.30654 -5.2591e-21
+      translation -2.38139 -3.30654 -5.2591e-21
       rotation 0 0 1 -1.5707953071795862
       name "(8)"
       size 0.025 0.7 0.5

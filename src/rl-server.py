@@ -1,10 +1,12 @@
 import os
 import sys
-from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from wheelchair_env import WheelchairEnv
+from stable_baselines3 import PPO
+from cnn_feature_extractor import LidarCNNFeatureExtractor
+from stable_baselines3.common.vec_env import VecNormalize
 
-TRAIN_STEPS = 1_000_000
+TRAIN_STEPS = 15_000_000
 N_ROBOTS = 4
 
 
@@ -19,31 +21,43 @@ def train_model(new=False):
             return _init
 
         env = SubprocVecEnv([env_fn(i) for i in range(N_ROBOTS)])
+        env = VecNormalize(env, norm_obs=True, norm_reward=False)
 
-        prev_model = os.path.exists("./models/dqn_wheelchair.zip")
+        path = "./models/ppo_wheelchair"
+        prev_model = os.path.exists(path + ".zip")
 
         if prev_model and not new:
             print("Loading previous model")
-            model = DQN.load("./models/dqn_wheelchair", env)
+            model = PPO.load(path, env=env)
         else:
             if prev_model:
                 print("Deleting previous model")
-                os.remove("./models/dqn_wheelchair.zip")
+                os.remove(path + ".zip")
 
             print("Creating new model")
-            model = DQN(
-                "MlpPolicy",
+
+            policy_kwargs = dict(
+                features_extractor_class=LidarCNNFeatureExtractor,
+                features_extractor_kwargs=dict(features_dim=64),
+            )
+            model = PPO(
+                "CnnPolicy",
                 env,
+                policy_kwargs=policy_kwargs,
                 verbose=1,
-                gamma=0.9999,
-                batch_size=200,
-                exploration_fraction=0.25,
+                n_steps=8192,
+                learning_rate=5e-5,
+                batch_size=1024,
+                n_epochs=20,
+                clip_range=0.1,
+                ent_coef=0.01,
+                device="cuda",
             )
 
         model.learn(total_timesteps=TRAIN_STEPS)
 
     finally:
-        model.save("./models/dqn_wheelchair")
+        model.save(path)
 
 
 if __name__ == "__main__":
