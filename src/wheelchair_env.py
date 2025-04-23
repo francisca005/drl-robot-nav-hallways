@@ -83,10 +83,12 @@ class WheelchairEnv(gym.Env):
 
         """ Collision penalty, exponential on distance if below a threshold """
         min_range = np.min(obs[140:220])
-        min_threshold = 0.7
+        min_threshold = 1
 
         if min_range < min_threshold:
             r_collision = -np.exp(3 * (min_threshold - min_range)) + 1
+            if self.time_step % 100 == 0:
+                print(f"Collision penalty: {r_collision} for robot {self.env_id}")
         else:
             r_collision = 0
 
@@ -99,22 +101,20 @@ class WheelchairEnv(gym.Env):
     def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
         v, w = action
 
-        left = max(obs[150:170])
-        front = max(obs[170:190])
-        right = max(obs[190:210])
+        left = max(obs[150:175])
+        front = max(obs[175:185])
+        right = max(obs[185:210])
 
         """ Check which direction has the most free space and reward movement in that direction """
         r = 1
         mx = max(left, front, right)
         threshold = 0.2
-        if np.abs(mx - front) < threshold:
-            return r if w == 0 else -0.5
-        elif np.abs(mx - right) < threshold:
-            return r if w < 0 else -0.5
+        if np.abs(mx - right) < threshold:
+            return r if w < 0 else -r
         elif np.abs(mx - left) < threshold:
-            return r if w > 0 else -0.5
+            return r if w > 0 else -r
 
-        return r
+        return r if w == 0 else -r
 
     def collision_reward(self) -> int:
         return -10
