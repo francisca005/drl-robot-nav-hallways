@@ -46,7 +46,11 @@ class RobotClient(Supervisor):
     def reset_robot(self) -> None:
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
-        self.robot_node.getField("rotation").setSFRotation(self.initial_rotation)
+
+        rotation = self.initial_rotation.copy()
+        rotation[3] += np.random.uniform(-0.5, 0.5)  # Randomize rotation
+        self.robot_node.getField("rotation").setSFRotation(rotation)
+
         self.simulationResetPhysics()
 
         # Seems to never have more than 1 packet in the queue
