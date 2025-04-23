@@ -82,11 +82,11 @@ class WheelchairEnv(gym.Env):
         r_distance = 1 if v > 0 else 0
 
         """ Collision penalty, exponential on distance if below a threshold """
-        min_range = np.min(obs[90:270])
-        min_threshold = 0.3
+        min_range = np.min(obs[140:220])
+        min_threshold = 0.7
 
         if min_range < min_threshold:
-            r_collision = -np.exp(2 * (min_threshold - min_range))
+            r_collision = -np.exp(3 * (min_threshold - min_range)) + 1
         else:
             r_collision = 0
 
@@ -99,17 +99,19 @@ class WheelchairEnv(gym.Env):
     def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
         v, w = action
 
-        right = max(obs[150:170])
+        left = max(obs[150:170])
         front = max(obs[170:190])
-        left = max(obs[190:210])
+        right = max(obs[190:210])
 
         """ Check which direction has the most free space and reward movement in that direction """
         r = 1
-        if max(right, front, left) == front:
-            return r
-        elif max(right, front, left) == right:
+        mx = max(left, front, right)
+        threshold = 0.2
+        if np.abs(mx - front) < threshold:
+            return r if w == 0 else -0.5
+        elif np.abs(mx - right) < threshold:
             return r if w < 0 else -0.5
-        elif max(right, front, left) == left:
+        elif np.abs(mx - left) < threshold:
             return r if w > 0 else -0.5
 
         return r
@@ -125,13 +127,15 @@ class WheelchairEnv(gym.Env):
         """
         return 0
 
-    def send_action_get_obs(self, action: Tuple[int, int]) -> np.ndarray:
+    def send_action_get_obs(self, action: Tuple[int, int]) -> Tuple[np.ndarray, int]:
+        """Send action to server and get observation"""
         self.socket.send_pyobj(action)
         return self.get_observation()
 
-    def get_observation(self) -> np.ndarray:
+    def get_observation(self) -> Tuple[np.ndarray, int]:
+        """Get observation from server"""
         raw = np.array(self.socket.recv_pyobj(), dtype=np.float32)
-        obs, term = raw[:-1], raw[-1]
+        obs, term = np.clip(raw[:-1], 0.0, 10.0), int(raw[-1])
 
         return obs, term
 
