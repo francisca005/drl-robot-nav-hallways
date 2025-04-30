@@ -108,16 +108,9 @@ class WheelchairEnv(gym.Env):
         mx = max(left, front, right)
         threshold = 0.01
         if np.abs(mx - right) < threshold:
-            if self.time_step % 1000 == 0 and self.env_id == 1:
-                print(f"Robot {self.env_id} got reward to go right")
             return r if w < 0 else -r
         elif np.abs(mx - left) < threshold:
-            if self.time_step % 1000 == 0 and self.env_id == 1:
-                print(f"Robot {self.env_id} got reward to go left")
             return r if w > 0 else -r
-
-        if self.time_step % 1000 == 0 and self.env_id == 1:
-            print(f"Robot {self.env_id} got reward to go straight")
 
         return r if w == 0 else -r
 
