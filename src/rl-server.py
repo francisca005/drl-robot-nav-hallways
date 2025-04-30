@@ -7,7 +7,7 @@ from cnn_feature_extractor import LidarCNNFeatureExtractor
 from stable_baselines3.common.vec_env import VecNormalize
 
 TRAIN_STEPS = 15_000_000
-N_ROBOTS = 4
+N_ROBOTS = 5
 
 
 def train_model(new=False):
@@ -20,7 +20,7 @@ def train_model(new=False):
 
             return _init
 
-        env = SubprocVecEnv([env_fn(i) for i in range(N_ROBOTS)])
+        env = SubprocVecEnv([env_fn(i + 4) for i in range(N_ROBOTS)])
         env = VecNormalize(env, norm_obs=True, norm_reward=False)
 
         path = "./models/ppo_wheelchair"
