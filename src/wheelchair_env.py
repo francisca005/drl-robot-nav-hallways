@@ -22,8 +22,8 @@ class WheelchairEnv(gym.Env):
         self.obs_shape = (360,)
         self.action_space = gym.spaces.Discrete(6)
 
-        v = 3.5
-        w = 5
+        v = 1
+        w = 1
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
@@ -99,9 +99,9 @@ class WheelchairEnv(gym.Env):
     def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
         v, w = action
 
-        left = max(obs[130:175])
+        left = max(obs[100:175])
         front = max(obs[175:185])
-        right = max(obs[185:230])
+        right = max(obs[185:260])
 
         """ Check which direction has the most free space and reward movement in that direction """
         r = 1

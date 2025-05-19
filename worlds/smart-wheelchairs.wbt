@@ -13,7 +13,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.5549298772584265 0.5554336194593984 0.6193111703337669 2.0317841691456793
-  position 0.09378720161357862 -3.2433618258997976 13.570458514573213
+  position 0.09374305479765285 -3.2920166762803476 14.012829244936686
 }
 TexturedBackground {
   skyColor [
@@ -24,7 +24,7 @@ DEF Giorgio TurtleBot3Burger {
   translation -4.26204 -4.5 0
   rotation 0 0 1 1.5707963267948966
   name "Giorgio 0"
-  controller "<none>"
+  controller "robot_client"
   controllerArgs [
     "0"
   ]
@@ -53,7 +53,7 @@ DEF Giorgio TurtleBot3Burger {
   translation -2.73813 -4.50357 0
   rotation 0 0 1 1.5707963267948966
   name "Giorgio 1"
-  controller "<none>"
+  controller "robot_client"
   controllerArgs [
     "1"
   ]
@@ -84,7 +84,7 @@ DEF Giorgio TurtleBot3Burger {
   translation -1.21111 -4.55 0
   rotation 0.002315935868123677 -0.002369048213874898 0.9999945120107485 1.5708
   name "Giorgio 2"
-  controller "<none>"
+  controller "robot_client"
   controllerArgs [
     "2"
   ]
@@ -115,7 +115,7 @@ DEF Giorgio TurtleBot3Burger {
   translation 0.26763 -4.55 0
   rotation 0 0 1 1.5708
   name "Giorgio 3"
-  controller "<none>"
+  controller "robot_client"
   controllerArgs [
     "3"
   ]
