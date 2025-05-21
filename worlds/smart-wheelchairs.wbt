@@ -4,7 +4,6 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
 EXTERNPROTO "../protos/RobotisLds01.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
@@ -12,8 +11,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5506059061533788 0.5511057232337001 0.6269893284004736 2.0207186370588657
-  position 0.23678675421148077 -3.3536150226697607 21.687647708779565
+  orientation -0.4932670757322272 0.4937148430134456 0.7161935812242289 1.8977101600063964
+  position -0.9290909279649413 -5.890471658814681 12.249962053391247
 }
 TexturedBackground {
   skyColor [
@@ -143,7 +142,7 @@ DEF Giorgio TurtleBot3Burger {
   ]
 }
 DEF Giorgio TurtleBot3Burger {
-  translation 1.78421 -4.56277 -0.000205305
+  translation 2.00421 -4.56277 -0.000205305
   rotation 0 0 1 1.5708
   name "Giorgio 4"
   controller "robot_client"
@@ -326,7 +325,7 @@ DEF End_Strip Robot {
   controller "end_strip_controller"
 }
 DEF End_Strip Robot {
-  translation 1.75 -2.16 0.03
+  translation 1.93 -2.16 0.03
   children [
     Shape {
       appearance Appearance {
@@ -335,7 +334,7 @@ DEF End_Strip Robot {
         }
       }
       geometry Box {
-        size 1.3 0.1 0.01
+        size 1.6 0.1 0.01
       }
     }
     Emitter {
@@ -345,7 +344,7 @@ DEF End_Strip Robot {
     TouchSensor {
       name "Bumper"
       boundingObject Box {
-        size 1.3 0.15 0.05
+        size 1.6 0.15 0.05
       }
     }
   ]
@@ -367,7 +366,7 @@ DEF End_Strip Robot {
     }
     Emitter {
       name "Emitter"
-      channel 7
+      channel 8
     }
     TouchSensor {
       name "Bumper"
@@ -394,7 +393,7 @@ DEF End_Strip Robot {
     }
     Emitter {
       name "Emitter"
-      channel 8
+      channel 7
     }
     TouchSensor {
       name "Bumper"
@@ -545,6 +544,23 @@ DEF End_Strip Robot {
 }
 DEF Scene Group {
   children [
+    Solid {
+      translation 1.99 -3.31 0.2
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+            }
+          }
+          geometry Box {
+            size 0.4 0.8 0.4
+          }
+        }
+      ]
+      boundingObject Box {
+        size 0.4 0.8 0.4
+      }
+    }
     Wall {
       translation 2.5 -0.38 0
       name "(6)(1)"
@@ -610,15 +626,6 @@ DEF Scene Group {
       name "(12)"
       size 0.1 10 0.5
     }
-    SolidBox {
-      translation 1.77 -3.30038 0.25
-      rotation 0 0 1 -5.307179586466759e-06
-      size 0.25 0.25 0.5
-      appearance PBRAppearance {
-        roughness 0.5
-        metalness 0
-      }
-    }
     Wall {
       translation 0.8 -3.31581 -1.77636e-15
       rotation 0 0 1 -1.5707953071795862
@@ -649,7 +656,7 @@ DEF Scene Group {
       size 0.1 3 0.5
     }
     Wall {
-      translation 2.5 -3.45 0
+      translation 2.88 -3.45 0
       name "(6)"
       size 0.1 3 0.5
     }
@@ -664,14 +671,14 @@ DEF Scene Group {
       size 0.1 2 0.5
     }
     Wall {
-      translation -0.27 2.13 0
-      name "(6)(7)"
-      size 0.1 2 0.5
+      translation -3.33 2.08 0
+      name "(6)(8)"
+      size 0.1 1.75 0.5
     }
     Wall {
-      translation -3.33 2.13 0
-      name "(6)(8)"
-      size 0.1 2 0.5
+      translation -0.21 2.08 0
+      name "(6)(7)"
+      size 0.1 1.75 0.5
     }
     Wall {
       translation 1 -3.45 0

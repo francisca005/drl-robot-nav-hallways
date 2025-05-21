@@ -6,7 +6,7 @@ from stable_baselines3 import PPO
 from cnn_feature_extractor import LidarCNNFeatureExtractor
 from stable_baselines3.common.vec_env import VecNormalize
 
-TRAIN_STEPS = 40_000_000
+TRAIN_STEPS = 15_000_000
 N_ROBOTS = 9
 
 
@@ -52,7 +52,7 @@ def train_model(new=False):
                 clip_range=0.1,
                 ent_coef=0.01,
                 device="cuda",
-                tensorboard_log='logs/ppo.log'
+                tensorboard_log="logs/ppo.log",
             )
 
         model.learn(total_timesteps=TRAIN_STEPS)

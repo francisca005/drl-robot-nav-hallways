@@ -23,7 +23,7 @@ class WheelchairEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(6)
 
         v = 1
-        w = 1
+        w = 3
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
