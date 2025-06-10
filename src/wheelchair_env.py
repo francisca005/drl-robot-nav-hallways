@@ -106,13 +106,41 @@ class WheelchairEnv(gym.Env):
         """ Check which direction has the most free space and reward movement in that direction """
         r = 1
         mx = max(left, front, right)
-        threshold = 0.01
+        threshold = 0.05
         if np.abs(mx - right) < threshold:
             return r if w < 0 else -r
         elif np.abs(mx - left) < threshold:
             return r if w > 0 else -r
 
         return r if w == 0 else -r
+
+    def early_side_commitment_reward(
+        self, obs: np.ndarray, action: Tuple[int, int]
+    ) -> int:
+        """
+        Reward for early side commitment.
+        If the robot is moving forward and has more space on the left, it should turn left.
+        If it has more space on the right, it should turn right.
+        """
+        _, w = action
+
+        front = obs[175:185]
+        left = obs[100:175]
+        right = obs[185:260]
+
+        threshold = 1.5  # if there is an object closer than this
+        r = 1
+
+        if np.any(front < threshold):
+            left_clearance = np.mean(left)
+            right_clearance = np.mean(right)
+
+            if left_clearance > right_clearance:
+                return r if w > 0 else -r
+
+            return r if w < 0 else -r
+
+        return 0
 
     def collision_reward(self) -> int:
         return -10
