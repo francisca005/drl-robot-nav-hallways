@@ -125,15 +125,15 @@ class WheelchairEnv(gym.Env):
         _, w = action
 
         front = obs[175:185]
-        left = obs[100:175]
-        right = obs[185:260]
+        left = obs[130:175]
+        right = obs[185:230]
 
-        threshold = 1.5  # if there is an object closer than this
+        threshold = 1  # if there is an object closer than this
         r = 1
 
         if np.any(front < threshold):
-            left_clearance = np.mean(left)
-            right_clearance = np.mean(right)
+            left_clearance = np.mean(left[left > threshold])
+            right_clearance = np.mean(right[right > threshold])
 
             if left_clearance > right_clearance:
                 return r if w > 0 else -r
