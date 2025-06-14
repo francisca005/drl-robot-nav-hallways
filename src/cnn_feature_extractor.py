@@ -23,8 +23,9 @@ class LidarCNNFeatureExtractor(BaseFeaturesExtractor):
             cnn_output_dim = self.cnn(sample_lidar).shape[1]
 
         """ Embed the integer action as a dense vector """
-        self.embedding = nn.Embedding(num_actions, embed_dim)
-        print(f"Num actions: {num_actions} Embedding dimension: {embed_dim}")
+        """ Add 1 to num_actions to include a special embedding for "no previous action" (-1) """
+        self.embedding = nn.Embedding(num_actions + 1, embed_dim)
+        self.num_actions = num_actions
 
         """ Total is the CNN output dimension + embedding for the previous action """
         total_input_dim = cnn_output_dim + embed_dim
@@ -46,7 +47,20 @@ class LidarCNNFeatureExtractor(BaseFeaturesExtractor):
         """ CNN expects [batch_size, 1, 360] """
         x = self.cnn(lidar.unsqueeze(1))
 
-        embedded = self.embedding(prev_action)
+        """
+        Handle -1 (no previous action) by mapping it to the last embedding index
+        Invalid action: -1 -> embedding index: 6 (num_actions)
+        """
+        prev_action_embedded_idx = torch.where(
+            prev_action == -1, self.num_actions, prev_action
+        )
+
+        """ Clamp any other invalid values """
+        prev_action_embedded_idx = torch.clamp(
+            prev_action_embedded_idx, 0, self.num_actions
+        )
+
+        embedded = self.embedding(prev_action_embedded_idx)
 
         """ Concatenate CNN features with embedded previous action """
         combined = torch.cat([x, embedded], dim=1)

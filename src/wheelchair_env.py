@@ -57,7 +57,6 @@ class WheelchairEnv(gym.Env):
         """
 
         self.prev_action = action
-        print(f"Entering step function with action: {action}")
         action = self.to_action(action)
         reward = self.get_reward(self.prev_lidar, action)
 
@@ -71,7 +70,6 @@ class WheelchairEnv(gym.Env):
         self.prev_lidar = obs.lidar
         self.time_step += 1
 
-        print(f"obs: {obs.lidar.shape}, {obs.prev_action}")
         return obs.to_array(), reward, obs.goal_reached, False, {}
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
