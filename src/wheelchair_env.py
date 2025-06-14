@@ -1,5 +1,7 @@
+from robot_state import RobotState
 from typing import Tuple
 import gymnasium as gym
+from gymnasium.spaces import Box
 import numpy as np
 import zmq
 
@@ -17,13 +19,11 @@ class WheelchairEnv(gym.Env):
         """ 
         Action and state space definition.
         Robot will be able to control speed of left and right wheels between 0 and 5.
-        State is a vector of 360 lidar readings.
+        State is a vector of 360 lidar readings and the last action taken (as integer).
         """
-        self.obs_shape = (360,)
         self.action_space = gym.spaces.Discrete(6)
 
-        v = 1
-        w = 3
+        v, w = 1, 3
         self.to_action = lambda x: (
             [
                 [v, 0],  # Forward
@@ -35,11 +35,17 @@ class WheelchairEnv(gym.Env):
             ]
         )[x]
 
-        self.observation_space = gym.spaces.Box(
-            low=0.0, high=10.0, shape=self.obs_shape, dtype=np.float32
+        self.observation_space = Box(
+            # 0 to 5 because there are 6 discrete actions
+            low=np.concatenate([np.full(360, 0.0), [0]]),
+            high=np.concatenate([np.full(360, 10.0), [5]]),
+            dtype=np.float64,
         )
+        self.obs_shape = self.observation_space.shape
 
-        self.prev_obs = self.no_obs()
+        self.no_obs()
+        self.prev_action = 0
+        self.prev_pref = 0.0  # Previous preference for side commitment
         self.time_step = 0
         self.time_limit = 20_000
 
@@ -50,33 +56,26 @@ class WheelchairEnv(gym.Env):
         :return: Tuple of (observation, reward, done, info)
         """
 
+        self.prev_action = action
+        print(f"Entering step function with action: {action}")
         action = self.to_action(action)
-        reward = self.get_reward(self.prev_obs, action)
+        reward = self.get_reward(self.prev_lidar, action)
 
-        done = False
-        truncated = False
+        obs = self.send_action_get_obs(action)
 
-        obs, term = self.send_action_get_obs(action)
-
-        if term == 1:
+        if obs.collided:
             reward += self.collision_reward()
-        elif term == 2:
-            done = True
+        elif obs.goal_reached:
             reward += self.goal_reward()
 
-        self.prev_obs = obs
+        self.prev_lidar = obs.lidar
         self.time_step += 1
 
-        if self.time_step >= self.time_limit:
-            # done = True
-            # truncated = True
-            # print(f"Time limit reached for robot {self.env_id}")
-            pass
-
-        return obs, reward, done, truncated, {}
+        print(f"obs: {obs.lidar.shape}, {obs.prev_action}")
+        return obs.to_array(), reward, obs.goal_reached, False, {}
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
-        v, w = action
+        v, _ = action
 
         """ Reward for moving forward """
         r_distance = 1 if v > 0 else 0
@@ -97,7 +96,7 @@ class WheelchairEnv(gym.Env):
         return reward
 
     def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
-        v, w = action
+        _, w = action
 
         left = max(obs[100:175])
         front = max(obs[175:185])
@@ -128,17 +127,22 @@ class WheelchairEnv(gym.Env):
         left = obs[130:175]
         right = obs[185:230]
 
-        threshold = 1  # if there is an object closer than this
-        r = 1
+        threshold = 1.5  # if there is an object closer than this
+        r = 2
 
         if np.any(front < threshold):
             left_clearance = np.mean(left[left > threshold])
             right_clearance = np.mean(right[right > threshold])
 
-            if left_clearance > right_clearance:
-                return r if w > 0 else -r
+            alpha = 0.3
+            side_diff = right_clearance - left_clearance
+            new_pref = (1 - alpha) * self.prev_pref + alpha * side_diff
+            self.prev_pref = new_pref
 
-            return r if w < 0 else -r
+            if new_pref > 0:
+                return r if w < 0 else -r
+
+            return r if w > 0 else -r
 
         return 0
 
@@ -153,22 +157,23 @@ class WheelchairEnv(gym.Env):
         """
         return 0
 
-    def send_action_get_obs(self, action: Tuple[int, int]) -> Tuple[np.ndarray, int]:
+    def send_action_get_obs(self, action: Tuple[int, int]) -> RobotState:
         """Send action to server and get observation"""
         self.socket.send_pyobj(action)
         return self.get_observation()
 
-    def get_observation(self) -> Tuple[np.ndarray, int]:
+    def get_observation(self) -> RobotState:
         """Get observation from server"""
-        raw = np.array(self.socket.recv_pyobj(), dtype=np.float32)
-        obs, term = np.clip(raw[:-1], 0.0, 10.0), int(raw[-1])
+        state = self.socket.recv_pyobj()
+        state.prev_action = self.prev_action
 
-        return obs, term
+        return state
 
     def no_obs(self) -> np.ndarray:
-        return np.full(self.obs_shape, 10.0)
+        return np.zeros(self.obs_shape, dtype=np.float64)
 
     def reset(self, seed: int = None) -> Tuple[np.ndarray, dict]:
-        self.prev_obs = self.no_obs()
+        obs = self.no_obs()
+        self.prev_lidar = obs[:360]
         self.time_step = 0
-        return self.prev_obs, {}
+        return obs, {}

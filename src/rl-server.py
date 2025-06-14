@@ -38,7 +38,7 @@ def train_model(new=False):
 
             policy_kwargs = dict(
                 features_extractor_class=LidarCNNFeatureExtractor,
-                features_extractor_kwargs=dict(features_dim=64),
+                features_extractor_kwargs=dict(features_dim=128),
             )
             model = PPO(
                 "CnnPolicy",

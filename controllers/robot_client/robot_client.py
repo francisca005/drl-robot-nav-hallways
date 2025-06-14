@@ -1,3 +1,8 @@
+import sys, os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../..", "src"))
+
+from robot_state import RobotState
 from controller import Supervisor
 import numpy as np
 import sys
@@ -63,22 +68,27 @@ class RobotClient(Supervisor):
             self.update_motors(action)
 
             """Observation sent to server is lidar readings + collision/end flag"""
-            obs = np.append(self.read_observation(), 0)
+            lidar = self.read_observation()
+            collided = self.detect_collision()
+            end = self.detect_end()
 
-            if self.detect_collision():
-                obs[obs.size - 1] = 1  # 1 means collision
-                self.reset_robot()
-            elif self.detect_end():
-                obs[obs.size - 1] = 2  # 2 means reached end of corridor successfully
+            if collided or end:
                 self.reset_robot()
 
-            self.send_observation(obs)
+            state = RobotState(
+                lidar=lidar,
+                prev_action=0,  # placeholder, will be set in env
+                collided=collided,
+                goal_reached=end,
+            )
+
+            self.send_observation(state)
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
 
-    def send_observation(self, obs: np.ndarray) -> None:
+    def send_observation(self, obs: RobotState) -> None:
         """Open pipe and send observation to server"""
         self.socket.send_pyobj(obs)
 
