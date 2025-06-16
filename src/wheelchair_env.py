@@ -48,6 +48,7 @@ class WheelchairEnv(gym.Env):
         self.prev_pref = 0.0  # Previous preference for side commitment
         self.time_step = 0
         self.time_limit = 20_000
+        self.commitment_threshold = 2.5  # Distance below which we force side commitment
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
         """
@@ -73,76 +74,106 @@ class WheelchairEnv(gym.Env):
         return obs.to_array(), reward, obs.goal_reached, False, {}
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
-        v, _ = action
+        v, w = action
 
-        """ Reward for moving forward """
-        r_distance = 1 if v > 0 else 0
+        # Forward movement reward
+        r_distance = 1.0 if v > 0 else 0.0
 
-        """ Collision penalty, exponential on distance if below a threshold """
-        min_range = np.min(obs[140:220])
-        min_threshold = 1
-
-        if min_range < min_threshold:
-            r_collision = -np.exp(3 * (min_threshold - min_range)) + 1
+        # Collision penalty (exponential when very close)
+        min_range = np.min(obs[140:220])  # Front sector
+        collision_threshold = 1.0
+        if min_range < collision_threshold:
+            r_collision = -np.exp(3 * (collision_threshold - min_range)) + 1
         else:
-            r_collision = 0
+            r_collision = 0.0
 
-        r_direction = self.direction_reward(obs, action)
+        # Main navigation reward - replaces both direction_reward and early_side_commitment
+        r_navigation = self.navigation_reward(obs, action)
 
-        reward = r_distance + r_collision + r_direction
+        # Penalize excessive turning when not needed
+        r_stability = self.stability_reward(obs, action)
 
-        return reward
+        r_front_back = self.front_back_reward(obs, action)
 
-    def direction_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> int:
+        total_reward = (
+            r_distance + r_collision + r_navigation + r_stability + r_front_back
+        )
+        return total_reward
+
+    def navigation_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
         _, w = action
 
-        left = max(obs[100:175])
-        front = max(obs[175:185])
-        right = max(obs[185:260])
+        # Define sectors
+        left_sector = obs[100:170]
+        front_sector = obs[170:190]
+        front_clearance = np.mean(front_sector)
+        right_sector = obs[190:260]
 
-        """ Check which direction has the most free space and reward movement in that direction """
-        r = 1
-        mx = max(left, front, right)
-        threshold = 0.05
-        if np.abs(mx - right) < threshold:
-            return r if w < 0 else -r
-        elif np.abs(mx - left) < threshold:
-            return r if w > 0 else -r
+        # Calculate clearances
+        left_clearance = np.mean(left_sector)
+        right_clearance = np.mean(right_sector)
 
-        return r if w == 0 else -r
+        # Check if there's an obstacle ahead that requires decision
+        obstacle_ahead = np.any(front_sector < self.commitment_threshold)
 
-    def early_side_commitment_reward(
-        self, obs: np.ndarray, action: Tuple[int, int]
-    ) -> int:
-        """
-        Reward for early side commitment.
-        If the robot is moving forward and has more space on the left, it should turn left.
-        If it has more space on the right, it should turn right.
-        """
-        _, w = action
+        if obstacle_ahead:
+            # Force early commitment - decide on a side and stick with it
+            clearance_diff = right_clearance - left_clearance
 
-        front = obs[175:185]
-        left = obs[130:175]
-        right = obs[185:230]
+            # Update preference with momentum (smoother decision making)
+            alpha = 0.30
+            self.prev_pref = (1 - alpha) * self.prev_pref + alpha * clearance_diff
 
-        threshold = 1.5  # if there is an object closer than this
-        r = 2
+            # Strong reward for committing to the better side
+            r = 3.0
 
-        if np.any(front < threshold):
-            left_clearance = np.mean(left[left > threshold])
-            right_clearance = np.mean(right[right > threshold])
-
-            alpha = 0.3
-            side_diff = right_clearance - left_clearance
-            new_pref = (1 - alpha) * self.prev_pref + alpha * side_diff
-            self.prev_pref = new_pref
-
-            if new_pref > 0:
+            if self.prev_pref > 0.2:  # Prefer right
                 return r if w < 0 else -r
-
-            return r if w > 0 else -r
+            elif self.prev_pref < -0.2:  # Prefer left
+                return r if w > 0 else -r
+            else:
+                # If sides are equal, slightly prefer the side with more space
+                if clearance_diff > 0.1:
+                    return r if w < 0 else -r * 0.5
+                elif clearance_diff < -0.1:
+                    return r if w > 0 else -r * 0.5
+                else:
+                    # Emergency: if really close and undecided, pick a side
+                    if np.min(front_sector) < 1.0:
+                        return r if w != 0 else -r
+        elif w == 0:
+            # No immediate obstacle - prefer going straight but allow gentle corrections
+            return 1.0
 
         return 0
+
+    def stability_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
+        """Penalize erratic behavior - excessive turning back and forth"""
+        _, w = action
+
+        # Light penalty for turning (encourages smoother paths)
+        if w != 0:
+            return -0.1
+        return 0
+
+    def front_back_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
+        _, w = action
+
+        back_left = obs[0:30]
+        back_right = obs[330:360]
+        back_clearance = np.mean(np.concatenate([back_left, back_right]))
+
+        front_sector = obs[170:190]
+        front_clearance = np.mean(front_sector)
+
+        if back_clearance > front_clearance * 2:
+            return -2.0 if w != 0 else 0.5
+
+        return 0
+
+    def reset_preference(self):
+        """Call this at the start of each episode"""
+        self.prev_pref = 0.0
 
     def collision_reward(self) -> int:
         return -10
@@ -174,4 +205,5 @@ class WheelchairEnv(gym.Env):
         obs = self.no_obs()
         self.prev_lidar = obs[:360]
         self.time_step = 0
+        self.reset_preference()
         return obs, {}
