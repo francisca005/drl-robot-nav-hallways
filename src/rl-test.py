@@ -1,13 +1,13 @@
 import os
-from stable_baselines3 import DQN
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 from wheelchair_env import WheelchairEnv
 
-TRAIN_STEPS = 10_000_000
-N_ROBOTS = 4
+TIME_STEPS = 1_000_000
+N_ROBOTS = 9
 
 
-def train_model():
+def run_model():
     """Start vectorized environment to train model in parallel"""
 
     def env_fn(i):
@@ -17,19 +17,23 @@ def train_model():
         return _init
 
     env = SubprocVecEnv([env_fn(i) for i in range(N_ROBOTS)])
+    env = VecNormalize(env, norm_obs=True, norm_reward=False)
 
-    assert os.path.exists("./models/dqn_wheelchair.zip")
+    path = "./models/ppo-good"
+    assert os.path.exists(
+        path + ".zip"
+    ), "Model path does not exist. Please train the model first."
 
-    model = DQN.load("./models/dqn_wheelchair", env)
+    model = PPO.load(path, env)
 
     """
     Test the model
     """
     obs = env.reset()
-    for _ in range(20_000):
+    for _ in range(TIME_STEPS):
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
 
 
 if __name__ == "__main__":
-    train_model()
+    run_model()

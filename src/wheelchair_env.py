@@ -93,11 +93,7 @@ class WheelchairEnv(gym.Env):
         # Penalize excessive turning when not needed
         r_stability = self.stability_reward(obs, action)
 
-        r_front_back = self.front_back_reward(obs, action)
-
-        total_reward = (
-            r_distance + r_collision + r_navigation + r_stability + r_front_back
-        )
+        total_reward = r_distance + r_collision + r_navigation + r_stability
         return total_reward
 
     def navigation_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
@@ -106,7 +102,6 @@ class WheelchairEnv(gym.Env):
         # Define sectors
         left_sector = obs[100:170]
         front_sector = obs[170:190]
-        front_clearance = np.mean(front_sector)
         right_sector = obs[190:260]
 
         # Calculate clearances
@@ -121,7 +116,7 @@ class WheelchairEnv(gym.Env):
             clearance_diff = right_clearance - left_clearance
 
             # Update preference with momentum (smoother decision making)
-            alpha = 0.30
+            alpha = 0.40
             self.prev_pref = (1 - alpha) * self.prev_pref + alpha * clearance_diff
 
             # Strong reward for committing to the better side
@@ -129,18 +124,16 @@ class WheelchairEnv(gym.Env):
 
             if self.prev_pref > 0.2:  # Prefer right
                 return r if w < 0 else -r
-            elif self.prev_pref < -0.2:  # Prefer left
+            if self.prev_pref < -0.2:  # Prefer left
                 return r if w > 0 else -r
-            else:
-                # If sides are equal, slightly prefer the side with more space
-                if clearance_diff > 0.1:
-                    return r if w < 0 else -r * 0.5
-                elif clearance_diff < -0.1:
-                    return r if w > 0 else -r * 0.5
-                else:
-                    # Emergency: if really close and undecided, pick a side
-                    if np.min(front_sector) < 1.0:
-                        return r if w != 0 else -r
+
+            # If sides are equal, slightly prefer the side with more space
+            if clearance_diff > 0.2:
+                return r if w < 0 else -r * 0.5
+            if clearance_diff < -0.2:
+                return r if w > 0 else -r * 0.5
+            if np.min(front_sector) < 1.0:
+                return r if w != 0 else -r
         elif w == 0:
             # No immediate obstacle - prefer going straight but allow gentle corrections
             return 1.0
@@ -153,22 +146,7 @@ class WheelchairEnv(gym.Env):
 
         # Light penalty for turning (encourages smoother paths)
         if w != 0:
-            return -0.1
-        return 0
-
-    def front_back_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
-        _, w = action
-
-        back_left = obs[0:30]
-        back_right = obs[330:360]
-        back_clearance = np.mean(np.concatenate([back_left, back_right]))
-
-        front_sector = obs[170:190]
-        front_clearance = np.mean(front_sector)
-
-        if back_clearance > front_clearance * 2:
-            return -2.0 if w != 0 else 0.5
-
+            return -0.2
         return 0
 
     def reset_preference(self):
