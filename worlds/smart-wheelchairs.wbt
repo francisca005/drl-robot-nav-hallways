@@ -11,8 +11,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.48052500445128726 0.4761755013403757 0.7364459328561278 1.8807242787355412
-  position -0.35020711740435667 -6.454915246805462 14.851314790703519
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position -0.12113567724413836 -0.14692411709303027 13.836580621111173
 }
 TexturedBackground {
   skyColor [
@@ -325,7 +325,7 @@ DEF End_Strip Robot {
   controller "end_strip_controller"
 }
 DEF End_Strip Robot {
-  translation 3.96 -1.17 0.03
+  translation 3.96 -0.7 0.03
   rotation 0 0 1 1.01503e-06
   children [
     Shape {
@@ -546,7 +546,7 @@ DEF End_Strip Robot {
 DEF Scene Group {
   children [
     Solid {
-      translation 4.06 -3.05 0.2
+      translation 4 -3.18 0.2
       children [
         Shape {
           appearance Appearance {
@@ -592,7 +592,7 @@ DEF Scene Group {
       size 0.1 1.5 0.5
     }
     Wall {
-      translation 3.92982 -0.75861 2.66453e-15
+      translation 3.92982 -0.39861 2.66453e-15
       rotation 0 0 1 1.5708
       name "(7)(6)"
       size 0.1 2.1 0.5

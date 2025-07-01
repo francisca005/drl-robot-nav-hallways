@@ -7,7 +7,7 @@ from cnn_feature_extractor import LidarCNNFeatureExtractor
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.monitor import Monitor
 
-TRAIN_STEPS = 8_000_000
+TRAIN_STEPS = 3_000_000
 N_ROBOTS = 9
 
 
