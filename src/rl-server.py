@@ -5,6 +5,7 @@ from wheelchair_env import WheelchairEnv
 from stable_baselines3 import PPO
 from cnn_feature_extractor import LidarCNNFeatureExtractor
 from stable_baselines3.common.vec_env import VecNormalize
+from stable_baselines3.common.monitor import Monitor
 
 TRAIN_STEPS = 8_000_000
 N_ROBOTS = 9
@@ -16,7 +17,7 @@ def train_model(new=False):
 
         def env_fn(i):
             def _init():
-                return WheelchairEnv(i)
+                return Monitor(WheelchairEnv(i))
 
             return _init
 
@@ -55,7 +56,7 @@ def train_model(new=False):
                 tensorboard_log="logs/ppo.log",
             )
 
-        model.learn(total_timesteps=TRAIN_STEPS)
+        model.learn(total_timesteps=TRAIN_STEPS, tb_log_name="ppo-run")
 
     finally:
         model.save(path)
