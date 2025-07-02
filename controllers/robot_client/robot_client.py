@@ -66,32 +66,10 @@ class RobotClient(Supervisor):
             self.receiver.nextPacket()
 
     def run(self) -> None:
-        with open(
-            f"/home/marco-vb/ros/rl-webots/data/positions/trajectory_{self.id}.csv",
-            "w",
-            newline="",
-        ) as f:
-            writer = csv.writer(f)
-            writer.writerow(["x", "y"])
-
         it = 0
         while self.step(self.timestep) != -1:
             pos = self.robot_node.getField("translation").getSFVec3f()
-
-            if it % 10 == 0:
-                self.positions.append(pos[:2])
-
-            if it == 1000:
-                with open(
-                    f"/home/marco-vb/ros/rl-webots/data/positions/trajectory_{self.id}.csv",
-                    "a",
-                    newline="",
-                ) as f:
-                    writer = csv.writer(f)
-                    writer.writerows(self.positions)
-
-                self.positions = []
-                it = 0
+            self.positions.append(pos[:2])
 
             action = self.get_action()
             if action.shape != (2,):
@@ -105,6 +83,17 @@ class RobotClient(Supervisor):
             end = self.detect_end()
 
             if collided or end:
+                with open(
+                    f"/home/marco-vb/ros/rl-webots/data/positions/{self.id}/t_{it}.csv",
+                    "w",
+                    newline="",
+                ) as f:
+                    writer = csv.writer(f)
+                    writer.writerow(["x", "y"])
+                    writer.writerows(self.positions)
+
+                self.positions = []
+                it += 1
                 self.reset_robot()
 
             state = RobotState(
@@ -115,7 +104,6 @@ class RobotClient(Supervisor):
             )
 
             self.send_observation(state)
-            it += 1
 
         print("Simulation ended, saving trajectory...")
 
