@@ -1,3 +1,4 @@
+import csv
 import sys, os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../..", "src"))
@@ -20,6 +21,7 @@ class RobotClient(Supervisor):
         self.socket.connect("ipc:///tmp/giorgio_" + str(id))
 
         self.timestep = int(self.getBasicTimeStep())
+        self.positions = []
 
         self.robot_node = self.getSelf()
 
@@ -63,26 +65,40 @@ class RobotClient(Supervisor):
             self.receiver.nextPacket()
 
     def run(self) -> None:
-        while self.step(self.timestep) != -1:
-            action = self.get_action()
-            self.update_motors(action)
+        try:
+            while self.step(self.timestep) != -1:
+                pos = self.robot_node.getField("translation").getSFVec3f()
+                self.positions.append(pos[:])
 
-            """Observation sent to server is lidar readings + collision/end flag"""
-            lidar = self.read_observation()
-            collided = self.detect_collision()
-            end = self.detect_end()
+                action = self.get_action()
+                self.update_motors(action)
 
-            if collided or end:
-                self.reset_robot()
+                """Observation sent to server is lidar readings + collision/end flag"""
+                lidar = self.read_observation()
+                collided = self.detect_collision()
+                end = self.detect_end()
 
-            state = RobotState(
-                lidar=lidar,
-                prev_action=0,  # placeholder, will be set in env
-                collided=collided,
-                goal_reached=end,
-            )
+                if collided or end:
+                    self.reset_robot()
 
-            self.send_observation(state)
+                state = RobotState(
+                    lidar=lidar,
+                    prev_action=0,  # placeholder, will be set in env
+                    collided=collided,
+                    goal_reached=end,
+                )
+
+                self.send_observation(state)
+        except Exception as e:
+            with open(
+                f"data/positions/trajectory_${self.id}.csv", "w", newline=""
+            ) as f:
+                writer = csv.writer(f)
+                writer.writerow(["x", "y", "z"])
+                writer.writerows(self.positions)
+
+            self.reset_robot()
+            sys.exit(1)
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""
