@@ -185,3 +185,10 @@ class WheelchairEnv(gym.Env):
         self.time_step = 0
         self.reset_preference()
         return obs, {}
+
+    def close(self):
+        print("Closing environment " + str(self.env_id))
+        self.socket.send_pyobj([-1])
+        self.socket.close()
+        zmq.Context.instance().destroy()
+        return super().close()

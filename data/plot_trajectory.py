@@ -7,7 +7,8 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 episode_id = sys.argv[1]
-filename = f"trajectory_{episode_id}.csv"
+filename = f"data/positions/trajectory_{episode_id}.csv"
+out = f"figures/trajectories/trajectory_{episode_id}.png"
 
 try:
     df = pd.read_csv(filename)
@@ -15,12 +16,20 @@ except FileNotFoundError:
     print(f"File not found: {filename}")
     sys.exit(1)
 
-# Plot x vs z (horizontal plane)
-plt.plot(df["x"], df["z"], marker="o", markersize=2, linewidth=1)
-plt.xlabel("x (m)")
-plt.ylabel("z (m)")
-plt.title(f"Trajectory for Episode {episode_id}")
-plt.grid(True)
-plt.axis("equal")
-plt.savefig(f"trajectory_{episode_id}.pdf", bbox_inches="tight")
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(df["x"], df["y"], color="red", linewidth=2)  # or customize color
+
+ax.set_axis_off()
+plt.margins(0)
+plt.gca().set_aspect("equal", adjustable="box")
+plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+plt.savefig(
+    out,
+    bbox_inches="tight",
+    pad_inches=0,
+    transparent=True,
+)
+plt.close()
+
+print(f"Saved trajectory image at {out}")

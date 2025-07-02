@@ -2,8 +2,9 @@ import os
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 from wheelchair_env import WheelchairEnv
+from stable_baselines3.common.monitor import Monitor
 
-TIME_STEPS = 1_000_000
+TIME_STEPS = 20_000
 N_ROBOTS = 9
 
 
@@ -12,7 +13,7 @@ def run_model():
 
     def env_fn(i):
         def _init():
-            return WheelchairEnv(i)
+            return Monitor(WheelchairEnv(i))
 
         return _init
 

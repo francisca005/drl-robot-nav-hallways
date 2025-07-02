@@ -50,13 +50,14 @@ class RobotClient(Supervisor):
 
         self.reset_robot()
 
-    def reset_robot(self) -> None:
+    def reset_robot(self, rotate=True) -> None:
         """Resets the robot to its initial position."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
 
-        rotation = self.initial_rotation.copy()
-        rotation[3] += np.random.uniform(-0.5, 0.5)  # Randomize rotation
-        self.robot_node.getField("rotation").setSFRotation(rotation)
+        if rotate:
+            rotation = self.initial_rotation.copy()
+            rotation[3] += np.random.uniform(-0.5, 0.5)  # Randomize rotation
+            self.robot_node.getField("rotation").setSFRotation(rotation)
 
         self.simulationResetPhysics()
 
@@ -65,40 +66,62 @@ class RobotClient(Supervisor):
             self.receiver.nextPacket()
 
     def run(self) -> None:
-        try:
-            while self.step(self.timestep) != -1:
-                pos = self.robot_node.getField("translation").getSFVec3f()
-                self.positions.append(pos[:])
+        with open(
+            f"/home/marco-vb/ros/rl-webots/data/positions/trajectory_{self.id}.csv",
+            "w",
+            newline="",
+        ) as f:
+            writer = csv.writer(f)
+            writer.writerow(["x", "y"])
 
-                action = self.get_action()
-                self.update_motors(action)
+        it = 0
+        while self.step(self.timestep) != -1:
+            pos = self.robot_node.getField("translation").getSFVec3f()
 
-                """Observation sent to server is lidar readings + collision/end flag"""
-                lidar = self.read_observation()
-                collided = self.detect_collision()
-                end = self.detect_end()
+            if it % 10 == 0:
+                self.positions.append(pos[:2])
 
-                if collided or end:
-                    self.reset_robot()
+            if it == 1000:
+                with open(
+                    f"/home/marco-vb/ros/rl-webots/data/positions/trajectory_{self.id}.csv",
+                    "a",
+                    newline="",
+                ) as f:
+                    writer = csv.writer(f)
+                    writer.writerows(self.positions)
 
-                state = RobotState(
-                    lidar=lidar,
-                    prev_action=0,  # placeholder, will be set in env
-                    collided=collided,
-                    goal_reached=end,
-                )
+                self.positions = []
+                it = 0
 
-                self.send_observation(state)
-        except Exception as e:
-            with open(
-                f"data/positions/trajectory_${self.id}.csv", "w", newline=""
-            ) as f:
-                writer = csv.writer(f)
-                writer.writerow(["x", "y", "z"])
-                writer.writerows(self.positions)
+            action = self.get_action()
+            if action.shape != (2,):
+                break
 
-            self.reset_robot()
-            sys.exit(1)
+            self.update_motors(action)
+
+            """Observation sent to server is lidar readings + collision/end flag"""
+            lidar = self.read_observation()
+            collided = self.detect_collision()
+            end = self.detect_end()
+
+            if collided or end:
+                self.reset_robot()
+
+            state = RobotState(
+                lidar=lidar,
+                prev_action=0,  # placeholder, will be set in env
+                collided=collided,
+                goal_reached=end,
+            )
+
+            self.send_observation(state)
+            it += 1
+
+        print("Simulation ended, saving trajectory...")
+
+        print("Trajectory saved, resetting robot...")
+        self.reset_robot(rotate=False)
+        sys.exit(0)
 
     def get_action(self) -> np.ndarray:
         """Open pipe and read action from server"""

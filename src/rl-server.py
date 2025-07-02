@@ -12,6 +12,8 @@ N_ROBOTS = 9
 
 
 def train_model(new=False):
+    env = None
+
     try:
         """Start vectorized environment to train model in parallel"""
 
@@ -57,8 +59,11 @@ def train_model(new=False):
             )
 
         model.learn(total_timesteps=TRAIN_STEPS, tb_log_name="ppo-run")
-
+    except KeyboardInterrupt:
+        print("Training interrupted by user")
     finally:
+        print("Calling env.close()")
+        env.close()
         model.save(path)
 
 
