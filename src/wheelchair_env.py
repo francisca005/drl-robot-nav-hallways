@@ -71,7 +71,12 @@ class WheelchairEnv(gym.Env):
         self.prev_lidar = obs.lidar
         self.time_step += 1
 
-        return obs.to_array(), reward, obs.goal_reached, False, {}
+        done = obs.collided or obs.goal_reached
+        info = {
+            "is_success": obs.goal_reached,
+        }
+
+        return obs.to_array(), reward, done, False, info
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
         v, w = action
