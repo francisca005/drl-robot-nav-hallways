@@ -12,7 +12,7 @@ class WheelchairEnv(gym.Env):
 
         context = zmq.Context()
         self.socket = context.socket(zmq.REQ)
-        self.socket.bind("ipc:///tmp/giorgio_" + str(env_id))
+        self.socket.bind(f"tcp://127.0.0.1:{5550 + env_id}")
 
         self.env_id = env_id
 

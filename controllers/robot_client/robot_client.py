@@ -18,7 +18,7 @@ class RobotClient(Supervisor):
 
         context = zmq.Context()
         self.socket = context.socket(zmq.REP)
-        self.socket.connect("ipc:///tmp/giorgio_" + str(id))
+        self.socket.connect(f"tcp://127.0.0.1:{5550 + id}")
 
         self.timestep = int(self.getBasicTimeStep())
         self.positions = []
@@ -83,8 +83,14 @@ class RobotClient(Supervisor):
             end = self.detect_end()
 
             if collided or end:
+                positions_dir = os.path.join(
+                    os.path.dirname(__file__),
+                    "..", "..", "data", "positions", str(self.id)
+                )
+                os.makedirs(positions_dir, exist_ok=True)
+
                 with open(
-                    f"/home/marco-vb/ros/rl-webots/data/positions/{self.id}/t_{it}.csv",
+                    os.path.join(positions_dir, f"t_{it}.csv"),
                     "w",
                     newline="",
                 ) as f:
