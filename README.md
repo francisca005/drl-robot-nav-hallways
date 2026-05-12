@@ -25,3 +25,12 @@ cd drl-robot-nav-hallways
 python .\src\rl-server.py --new
 
 começas a simulação no webots
+
+
+para ter as training curves da expriência fazer
+
+python .\src\plot_training_curves.py --experiment e2_features
+ou 
+python .\src\plot_training_curves.py --experiment e1_cnn
+
+sempre que se correr a um novo teste, guardar a pasta positions anterior e apagar. No fim do teste guardar a nova pasta position com o nome da expriência para não perder os caminhos
