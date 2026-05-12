@@ -23,3 +23,5 @@ nourto terminal
 cd drl-robot-nav-hallways
 .\venv\Scripts\activate
 python .\src\rl-server.py --new
+
+começas a simulação no webots

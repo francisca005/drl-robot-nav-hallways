@@ -47,7 +47,7 @@ class WheelchairEnv(gym.Env):
         self.prev_action = 0
         self.prev_pref = 0.0  # Previous preference for side commitment
         self.time_step = 0
-        self.time_limit = 20_000
+        self.time_limit = 5_000
         self.commitment_threshold = 2.5  # Distance below which we force side commitment
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
@@ -71,12 +71,20 @@ class WheelchairEnv(gym.Env):
         self.prev_lidar = obs.lidar
         self.time_step += 1
 
-        done = obs.collided or obs.goal_reached
+        #se um robô ficar preso durante muito tempo, o episódio termina por timeout e conta como episódio falhado
+        terminated = obs.collided or obs.goal_reached
+        truncated = self.time_step >= self.time_limit
+
+        if truncated and not terminated:
+            reward -= 10
+
         info = {
             "is_success": obs.goal_reached,
+            "collision": obs.collided,
+            "timeout": truncated and not terminated,
         }
 
-        return obs.to_array(), reward, done, False, info
+        return obs.to_array(), reward, terminated, truncated, info
 
     def get_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
         v, w = action
