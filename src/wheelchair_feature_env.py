@@ -54,7 +54,6 @@ class WheelchairFeatureEnv(WheelchairEnv):
 
         action_values = self.to_action(action)
 
-        # Reward is computed using raw LiDAR, exactly as in the baseline.
         reward = self.get_reward(self.prev_lidar, action_values)
 
         obs = self.send_action_get_obs(action_values)
@@ -72,11 +71,11 @@ class WheelchairFeatureEnv(WheelchairEnv):
 
         if truncated and not terminated:
             reward -= 10
-            self.request_timeout_reset()
+
 
         info = {
-            "is_success": obs.goal_reached,
-            "collision": obs.collided,
+            "is_success": obs.goal_reached if not truncated else False,
+            "collision": obs.collided if not truncated else False,
             "timeout": truncated and not terminated,
         }
 

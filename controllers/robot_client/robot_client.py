@@ -51,6 +51,7 @@ class RobotClient(Supervisor):
         # Minimum requirements before accepting an end-strip signal.
         self.min_steps_before_goal = 20
         self.min_distance_from_start_for_goal = 2.0
+        self.max_steps_per_episode = 5_000
 
         # Special command sent by the Python environment when an episode ends by timeout.
         self.timeout_reset_command = np.array([-999.0, -999.0], dtype=np.float32)
@@ -136,21 +137,6 @@ class RobotClient(Supervisor):
             if action.shape != (2,):
                 break
 
-            if np.allclose(action, self.timeout_reset_command):
-                self.save_trajectory(episode_id, outcome="timeout")
-                episode_id += 1
-                self.reset_robot()
-
-                lidar = self.read_observation()
-                state = RobotState(
-                    lidar=lidar,
-                    prev_action=0,
-                    collided=False,
-                    goal_reached=False,
-                )
-
-                self.send_observation(state)
-                continue
 
             self.last_command = action.copy()
             self.update_motors(action)
@@ -158,9 +144,20 @@ class RobotClient(Supervisor):
             lidar = self.read_observation()
             collided = self.detect_collision()
             end = self.detect_end()
+            timeout = (
+                not collided
+                and not end
+                and self.steps_since_reset >= self.max_steps_per_episode
+            )
 
-            if collided or end:
-                outcome = "collision" if collided else "success"
+            if collided or end or timeout:
+                if collided:
+                    outcome = "collision"
+                elif end:
+                    outcome = "success"
+                else:
+                    outcome = "timeout"
+
                 self.save_trajectory(episode_id, outcome=outcome)
                 episode_id += 1
                 self.reset_robot()
