@@ -3,8 +3,8 @@ from typing import Tuple
 import numpy as np
 from gymnasium.spaces import Box
 
-from wheelchair_env import WheelchairEnv
 from feature_engineering import extract_lidar_features
+from wheelchair_env import WheelchairEnv
 
 
 class WheelchairFeatureEnv(WheelchairEnv):
@@ -40,13 +40,13 @@ class WheelchairFeatureEnv(WheelchairEnv):
         return np.zeros(self.feature_dim, dtype=np.float32)
 
     def reset(self, seed: int = None, options=None) -> Tuple[np.ndarray, dict]:
-        # The reward still needs previous raw LiDAR.
         self.prev_lidar = np.zeros(360, dtype=np.float32)
         self.prev_action = 0
         self.time_step = 0
         self.reset_preference()
 
         features = extract_lidar_features(self.prev_lidar, self.prev_action)
+
         return features, {}
 
     def step(self, action: int):
@@ -72,6 +72,7 @@ class WheelchairFeatureEnv(WheelchairEnv):
 
         if truncated and not terminated:
             reward -= 10
+            self.request_timeout_reset()
 
         info = {
             "is_success": obs.goal_reached,

@@ -21,8 +21,7 @@ class RobotClient(Supervisor):
         self.socket.connect(f"tcp://127.0.0.1:{5550 + id}")
 
         self.timestep = int(self.getBasicTimeStep())
-        self.positions = []
-        self.steps_since_reset = 0
+        self.dt = self.timestep / 1000.0
 
         self.robot_node = self.getSelf()
 
@@ -50,10 +49,17 @@ class RobotClient(Supervisor):
         self.initial_rotation = self.robot_node.getField("rotation").getSFRotation()
 
         # Minimum requirements before accepting an end-strip signal.
-        # These values prevent stale receiver messages immediately after reset
-        # from being counted as successful episodes.
         self.min_steps_before_goal = 20
         self.min_distance_from_start_for_goal = 2.0
+
+        # Special command sent by the Python environment when an episode ends by timeout.
+        self.timeout_reset_command = np.array([-999.0, -999.0], dtype=np.float32)
+
+        self.positions = []
+        self.trajectory_rows = []
+        self.steps_since_reset = 0
+        self.prev_position_3d = None
+        self.last_command = np.array([0.0, 0.0], dtype=np.float32)
 
         self.reset_robot()
 
@@ -73,19 +79,56 @@ class RobotClient(Supervisor):
         else:
             self.robot_node.getField("rotation").setSFRotation(self.initial_rotation)
 
+        self.left_motor.setVelocity(0.0)
+        self.right_motor.setVelocity(0.0)
+
         self.simulationResetPhysics()
 
         self.positions = []
+        self.trajectory_rows = []
         self.steps_since_reset = 0
+        self.prev_position_3d = None
+        self.last_command = np.array([0.0, 0.0], dtype=np.float32)
 
         self.clear_receiver_queue()
+
+    def append_trajectory_sample(self) -> None:
+        """Store position, estimated speed and last commanded action for the current step."""
+        pos = np.array(
+            self.robot_node.getField("translation").getSFVec3f(),
+            dtype=np.float32,
+        )
+
+        if self.prev_position_3d is None:
+            speed_3d = 0.0
+            speed_xy = 0.0
+        else:
+            delta = pos - self.prev_position_3d
+            speed_3d = float(np.linalg.norm(delta) / self.dt)
+            speed_xy = float(np.linalg.norm(delta[:2]) / self.dt)
+
+        self.prev_position_3d = pos.copy()
+
+        self.positions.append([float(pos[0]), float(pos[1])])
+
+        self.trajectory_rows.append(
+            [
+                self.steps_since_reset,
+                float(pos[0]),
+                float(pos[1]),
+                float(pos[2]),
+                speed_3d,
+                speed_xy,
+                float(self.last_command[0]),
+                float(self.last_command[1]),
+            ]
+        )
 
     def run(self) -> None:
         episode_id = 0
 
         while self.step(self.timestep) != -1:
-            pos = self.robot_node.getField("translation").getSFVec3f()
-            self.positions.append(pos[:2])
+            self.append_trajectory_sample()
             self.steps_since_reset += 1
 
             action = self.get_action()
@@ -93,15 +136,32 @@ class RobotClient(Supervisor):
             if action.shape != (2,):
                 break
 
+            if np.allclose(action, self.timeout_reset_command):
+                self.save_trajectory(episode_id, outcome="timeout")
+                episode_id += 1
+                self.reset_robot()
+
+                lidar = self.read_observation()
+                state = RobotState(
+                    lidar=lidar,
+                    prev_action=0,
+                    collided=False,
+                    goal_reached=False,
+                )
+
+                self.send_observation(state)
+                continue
+
+            self.last_command = action.copy()
             self.update_motors(action)
 
-            # Observation sent to server is lidar readings + collision/end flag.
             lidar = self.read_observation()
             collided = self.detect_collision()
             end = self.detect_end()
 
             if collided or end:
-                self.save_trajectory(episode_id)
+                outcome = "collision" if collided else "success"
+                self.save_trajectory(episode_id, outcome=outcome)
                 episode_id += 1
                 self.reset_robot()
 
@@ -118,8 +178,18 @@ class RobotClient(Supervisor):
         self.reset_robot(rotate=False)
         sys.exit(0)
 
-    def save_trajectory(self, episode_id: int) -> None:
-        """Save the current episode trajectory to data/positions/<robot_id>/t_<episode_id>.csv."""
+    def save_trajectory(self, episode_id: int, outcome: str) -> None:
+        """
+        Save the current episode trajectory.
+
+        Columns:
+            step: controller step inside the episode
+            x, y, z: robot position
+            speed_3d: real speed computed from 3D displacement
+            speed_xy: planar speed computed from x/y displacement
+            command_v, command_w: last commanded linear/angular velocity
+            outcome: success, collision, or timeout
+        """
         positions_dir = os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -134,8 +204,22 @@ class RobotClient(Supervisor):
 
         with open(output_path, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["x", "y"])
-            writer.writerows(self.positions)
+            writer.writerow(
+                [
+                    "step",
+                    "x",
+                    "y",
+                    "z",
+                    "speed_3d",
+                    "speed_xy",
+                    "command_v",
+                    "command_w",
+                    "outcome",
+                ]
+            )
+
+            for row in self.trajectory_rows:
+                writer.writerow(row + [outcome])
 
     def get_action(self) -> np.ndarray:
         """Read action from the server."""
@@ -183,7 +267,7 @@ class RobotClient(Supervisor):
         """
         Detect whether the robot reached the end strip.
 
-        Previous logic accepted any receiver message as success:
+        The original logic accepted any receiver message as success:
             receiver.getQueueLength() > 0
 
         That caused false positives when stale or early messages remained in the
@@ -193,7 +277,6 @@ class RobotClient(Supervisor):
             2. the robot has been running for a minimum number of steps;
             3. the robot has moved a minimum distance from its initial position.
         """
-
         has_message = self.receiver.getQueueLength() > 0
 
         # Always clear pending messages, even if we decide not to accept them.
