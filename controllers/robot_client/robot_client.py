@@ -1,13 +1,13 @@
 import csv
-import sys, os
+import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../..", "src"))
 
-from robot_state import RobotState
-from controller import Supervisor
 import numpy as np
-import sys
 import zmq
+from controller import Supervisor
+from robot_state import RobotState
 
 
 class RobotClient(Supervisor):
@@ -22,6 +22,7 @@ class RobotClient(Supervisor):
 
         self.timestep = int(self.getBasicTimeStep())
         self.positions = []
+        self.steps_since_reset = 0
 
         self.robot_node = self.getSelf()
 
@@ -41,65 +42,67 @@ class RobotClient(Supervisor):
         self.left_motor.setPosition(float("inf"))
         self.right_motor.setPosition(float("inf"))
 
-        """ Distance between wheels """
+        # Distance between wheels
         self.l = 0.12
 
-        """ Store initial position for resetting """
+        # Store initial pose for resetting and for false-positive filtering.
         self.initial_position = self.robot_node.getField("translation").getSFVec3f()
         self.initial_rotation = self.robot_node.getField("rotation").getSFRotation()
 
+        # Minimum requirements before accepting an end-strip signal.
+        # These values prevent stale receiver messages immediately after reset
+        # from being counted as successful episodes.
+        self.min_steps_before_goal = 20
+        self.min_distance_from_start_for_goal = 2.0
+
         self.reset_robot()
 
+    def clear_receiver_queue(self) -> None:
+        """Remove all pending receiver packets."""
+        while self.receiver.getQueueLength() > 0:
+            self.receiver.nextPacket()
+
     def reset_robot(self, rotate=True) -> None:
-        """Resets the robot to its initial position."""
+        """Reset the robot to its initial position and clear stale receiver messages."""
         self.robot_node.getField("translation").setSFVec3f(self.initial_position)
 
         if rotate:
             rotation = self.initial_rotation.copy()
-            rotation[3] += np.random.uniform(-0.5, 0.5)  # Randomize rotation
+            rotation[3] += np.random.uniform(-0.5, 0.5)
             self.robot_node.getField("rotation").setSFRotation(rotation)
+        else:
+            self.robot_node.getField("rotation").setSFRotation(self.initial_rotation)
 
         self.simulationResetPhysics()
 
-        # Seems to never have more than 1 packet in the queue
-        while self.receiver.getQueueLength() > 0:
-            self.receiver.nextPacket()
+        self.positions = []
+        self.steps_since_reset = 0
+
+        self.clear_receiver_queue()
 
     def run(self) -> None:
-        it = 0
+        episode_id = 0
+
         while self.step(self.timestep) != -1:
             pos = self.robot_node.getField("translation").getSFVec3f()
             self.positions.append(pos[:2])
+            self.steps_since_reset += 1
 
             action = self.get_action()
+
             if action.shape != (2,):
                 break
 
             self.update_motors(action)
 
-            """Observation sent to server is lidar readings + collision/end flag"""
+            # Observation sent to server is lidar readings + collision/end flag.
             lidar = self.read_observation()
             collided = self.detect_collision()
             end = self.detect_end()
 
             if collided or end:
-                positions_dir = os.path.join(
-                    os.path.dirname(__file__),
-                    "..", "..", "data", "positions", str(self.id)
-                )
-                os.makedirs(positions_dir, exist_ok=True)
-
-                with open(
-                    os.path.join(positions_dir, f"t_{it}.csv"),
-                    "w",
-                    newline="",
-                ) as f:
-                    writer = csv.writer(f)
-                    writer.writerow(["x", "y"])
-                    writer.writerows(self.positions)
-
-                self.positions = []
-                it += 1
+                self.save_trajectory(episode_id)
+                episode_id += 1
                 self.reset_robot()
 
             state = RobotState(
@@ -111,36 +114,54 @@ class RobotClient(Supervisor):
 
             self.send_observation(state)
 
-        print("Simulation ended, saving trajectory...")
-
-        print("Trajectory saved, resetting robot...")
+        print("Simulation ended, resetting robot...")
         self.reset_robot(rotate=False)
         sys.exit(0)
 
+    def save_trajectory(self, episode_id: int) -> None:
+        """Save the current episode trajectory to data/positions/<robot_id>/t_<episode_id>.csv."""
+        positions_dir = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "data",
+            "positions",
+            str(self.id),
+        )
+        os.makedirs(positions_dir, exist_ok=True)
+
+        output_path = os.path.join(positions_dir, f"t_{episode_id}.csv")
+
+        with open(output_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["x", "y"])
+            writer.writerows(self.positions)
+
     def get_action(self) -> np.ndarray:
-        """Open pipe and read action from server"""
+        """Read action from the server."""
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
 
     def send_observation(self, obs: RobotState) -> None:
-        """Open pipe and send observation to server"""
+        """Send observation to the server."""
         self.socket.send_pyobj(obs)
 
     def update_motors(self, action: np.ndarray) -> None:
         """
-        Action is pair linear velocity, angular velocity
-        Convert to left and right wheel speeds
+        Action is a pair: linear velocity, angular velocity.
+        Convert it to left and right wheel speeds.
         """
         left_speed = action[0] - action[1] * self.l / 2
         right_speed = action[0] + action[1] * self.l / 2
+
         self.left_motor.setVelocity(left_speed)
         self.right_motor.setVelocity(right_speed)
 
     def read_observation(self) -> np.ndarray:
-        """Clip to avoid inf or nan values"""
+        """Read LiDAR and clip values to avoid inf/nan."""
         return np.clip(np.array(self.lidar.getRangeImage()), 0, 10)
 
     def detect_collision(self) -> bool:
-        """Bumper value is 1 if collision is detected, else 0"""
+        """Bumper value is 1 if collision is detected, else 0."""
         collided = self.bumper.getValue() == 1
 
         if collided:
@@ -149,14 +170,45 @@ class RobotClient(Supervisor):
 
         return collided
 
+    def distance_from_start(self) -> float:
+        """2D distance from the initial position."""
+        pos = self.robot_node.getField("translation").getSFVec3f()
+
+        x, y = pos[0], pos[1]
+        initial_x, initial_y = self.initial_position[0], self.initial_position[1]
+
+        return float(((x - initial_x) ** 2 + (y - initial_y) ** 2) ** 0.5)
+
     def detect_end(self) -> bool:
         """
-        End strip has an emmitter that sends a message when collision is detected
-        Note that in the Webots world, the end strip sends messages in the same channel that the robot is listening
-        And, of course, robots and strips on different corridors use different channels
+        Detect whether the robot reached the end strip.
+
+        Previous logic accepted any receiver message as success:
+            receiver.getQueueLength() > 0
+
+        That caused false positives when stale or early messages remained in the
+        receiver queue after reset. To make goal detection more robust, an end
+        signal is only accepted if:
+            1. a receiver message exists;
+            2. the robot has been running for a minimum number of steps;
+            3. the robot has moved a minimum distance from its initial position.
         """
 
-        return self.receiver.getQueueLength() > 0
+        has_message = self.receiver.getQueueLength() > 0
+
+        # Always clear pending messages, even if we decide not to accept them.
+        self.clear_receiver_queue()
+
+        if not has_message:
+            return False
+
+        if self.steps_since_reset < self.min_steps_before_goal:
+            return False
+
+        if self.distance_from_start() < self.min_distance_from_start_for_goal:
+            return False
+
+        return True
 
 
 if __name__ == "__main__":
