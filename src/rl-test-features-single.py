@@ -14,7 +14,7 @@ N_ROBOTS = 1
 MODEL_DIR = "./models"
 MODEL_PATH = os.path.join(MODEL_DIR, "ppo_wheelchair_features")
 VECNORM_PATH = os.path.join(MODEL_DIR, "vecnormalize_features.pkl")
-RESULTS_PATH = "success_rates_features_slope25_robot7.csv"
+RESULTS_PATH = "success_rates_features_slope25.csv"
 
 
 def make_env(env_id: int):
