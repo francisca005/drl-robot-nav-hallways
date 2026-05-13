@@ -14,9 +14,6 @@ drl-robot-env/
 logs/
 *.tfevents.*
 
-# Generated robot trajectories during runs
-data/positions/
-
 # Model checkpoints generated during training
 models/checkpoints
 models/checkpoints_features
