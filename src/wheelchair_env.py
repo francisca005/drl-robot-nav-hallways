@@ -69,7 +69,7 @@ class WheelchairEnv(gym.Env):
         truncated = self.time_step >= self.time_limit #tempo limite excedido
 
         if truncated and not terminated:
-            reward -= 10 #se deu timeout é penalizado
+            reward -= 20 #se deu timeout é penalizado, aumentado para 20
 
 
         info = {
@@ -109,7 +109,9 @@ class WheelchairEnv(gym.Env):
         r_navigation = self.navigation_reward(obs, action) #recompensa por direção adequada
         r_stability = self.stability_reward(obs, action) #penalização por virar
 
-        return r_distance + r_collision + r_navigation + r_stability
+        r_stop = -0.5 if v == 0 and w == 0 else 0.0 #nova mudificação para penalizar quando fica parado
+
+        return r_distance + r_collision + r_navigation + r_stability + r_stop
 
     def navigation_reward(self, obs: np.ndarray, action: Tuple[int, int]) -> float:
         _, w = action
@@ -174,8 +176,9 @@ class WheelchairEnv(gym.Env):
     def collision_reward(self) -> int:
         return -10
 
+    #modificação aumentar para 30
     def goal_reward(self) -> int:
-        return 0
+        return 30
 
     def send_action_get_obs(self, action: Tuple[int, int]) -> RobotState:
         self.socket.send_pyobj(action) #eviar ação
