@@ -1,0 +1,713 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
+EXTERNPROTO "../protos/RobotisLds01.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position -0.12110618089106157 -0.14689462065654466 24.268053877871928
+}
+TexturedBackground {
+  skyColor [
+    0.2 0.2 0.2
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -4.26204 -4.5 0
+  rotation 0 0 1 1.5707963267948966
+  name "Giorgio 0"
+  controller "robot_client"
+  controllerArgs [
+    "0"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -2.73813 -4.50357 0
+  rotation 0 0 1 1.5707963267948966
+  name "Giorgio 1"
+  controller "robot_client"
+  controllerArgs [
+    "1"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 1
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 1
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -1.21111 -4.55 0
+  rotation 0.002315935868123677 -0.002369048213874898 0.9999945120107485 1.5708
+  name "Giorgio 2"
+  controller "robot_client"
+  controllerArgs [
+    "2"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 2
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 2
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation 0.26763 -4.55 0
+  rotation 0 0 1 1.5708
+  name "Giorgio 3"
+  controller "robot_client"
+  controllerArgs [
+    "3"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 3
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 3
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation 4.05421 -4.63277 -0.000205305
+  rotation 0 0 1 1.5708
+  name "Giorgio 4"
+  controller "robot_client"
+  controllerArgs [
+    "4"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 4
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 4
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -4.24028 -1.49279 -0.000247793
+  rotation 0 0 1 1.5708
+  name "Giorgio 5"
+  controller "robot_client"
+  controllerArgs [
+    "5"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 5
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 5
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation 1.80759 -1.52385 -0.000184825
+  rotation 0.0023155291401616295 -0.0023245141011417375 0.9999946174650115 1.57115409546528
+  name "Giorgio 6"
+  controller "robot_client"
+  controllerArgs [
+    "6"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 6
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 6
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation 0.461202 1.68911 0.014349
+  rotation 0.0023159358681174164 -0.002369048213867623 0.9999945120107486 1.5520359870899012
+  name "Giorgio 8"
+  controller "robot_client"
+  controllerArgs [
+    "8"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 8
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 8
+    }
+  ]
+}
+DEF Giorgio TurtleBot3Burger {
+  translation -4.2023 1.60079 0.0285433
+  rotation 0.0023155291112882488 -0.0023245141192599944 0.9999946174650364 1.571154075248324
+  name "Giorgio 7"
+  controller "robot_client"
+  controllerArgs [
+    "7"
+  ]
+  supervisor TRUE
+  extensionSlot [
+    Emitter {
+      name "Emitter"
+      channel 7
+    }
+    RobotisLds01 {
+      name "Lidar"
+    }
+    TouchSensor {
+      rotation 0 0 1 4.692820414042842e-06
+      name "Bumper"
+      boundingObject Cylinder {
+        height 0.1
+        radius 0.11
+      }
+    }
+    Receiver {
+      name "Receiver"
+      channel 7
+    }
+  ]
+}
+TexturedBackgroundLight {
+  castShadows FALSE
+}
+DEF End_Strip Robot {
+  translation -4.25 -2.3 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation 3.96 -0.7 0.03
+  rotation 0 0 1 1.01503e-06
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.8 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 4
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.8 0.15 0.05
+      }
+    }
+  ]
+  name "robot(1)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -1.04326 1.62735 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 8
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(7)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -2.55326 1.63735 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 7
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(8)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -1.74 0.37 0.03
+  rotation 0 0 1 1.5708
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 5
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(5)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -1.05 0.37 0.03
+  rotation 0 0 1 1.5708
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 6
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(6)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -1.26114 -2.31 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 2
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(2)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation 0.25 -2.3 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 3
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(3)"
+  controller "end_strip_controller"
+}
+DEF End_Strip Robot {
+  translation -2.75 -2.3 0.03
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0 0.5 0
+        }
+      }
+      geometry Box {
+        size 1.3 0.1 0.01
+      }
+    }
+    Emitter {
+      name "Emitter"
+      channel 1
+    }
+    TouchSensor {
+      name "Bumper"
+      boundingObject Box {
+        size 1.3 0.15 0.05
+      }
+    }
+  ]
+  name "robot(4)"
+  controller "end_strip_controller"
+}
+DEF Scene Group {
+  children [
+    Solid {
+      translation 4 -3.18 0.2
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+            }
+          }
+          geometry Cylinder {
+            height 0.4
+            radius 0.15
+          }
+        }
+      ]
+      boundingObject Cylinder {
+        height 0.4
+        radius 0.15
+      }
+    }
+    Wall {
+      translation -1.8 2.7 0
+      name "(6)(4)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation 1.21 2.7 0
+      name "(6)(5)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -1.87 4.24 0
+      rotation 0 0 1 -1.5707953071795862
+      name "(6)(6)"
+      size 0.1 6.25 0.5
+    }
+    Wall {
+      translation -0.21113 -0.39259 2.66453e-15
+      rotation 0 0 1 1.5708
+      name "(7)(4)"
+      size 0.1 2.5 0.5
+    }
+    Wall {
+      translation -1.41018 0.38139 2.66453e-15
+      name "(7)(3)"
+      size 0.1 1.5 0.5
+    }
+    Wall {
+      translation 3.92982 -0.39861 2.66453e-15
+      rotation 0 0 1 1.5708
+      name "(7)(6)"
+      size 0.1 2.1 0.5
+    }
+    Wall {
+      translation -2.30113 -0.392594 2.66453e-15
+      rotation 0 0 1 1.5708
+      name "(7)(2)"
+      size 0.1 2.5 0.5
+    }
+    Wall {
+      translation -3.50018 -1.12861 2.66453e-15
+      name "(7)(1)"
+      size 0.1 1.5 0.5
+    }
+    Wall {
+      translation 0.99982 -1.12861 2.66453e-15
+      name "(7)(5)"
+      size 0.1 1.5 0.5
+    }
+    Wall {
+      translation -2.79429e-06 1.17 5.32907e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(12)(1)"
+      size 0.1 10 0.5
+    }
+    Floor {
+      appearance Parquetry {
+        type "light strip"
+      }
+    }
+    Wall {
+      translation -1.09 -1.92739 5.32907e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(12)"
+      size 0.1 7.9 0.5
+    }
+    Wall {
+      translation 0.8 -3.31581 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(11)"
+      size 0.025 0.5 0.5
+    }
+    Wall {
+      translation -0.29 -3.31581 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(10)"
+      size 0.025 0.5 0.5
+    }
+    Wall {
+      translation -1.60729 -3.30612 -1.77636e-15
+      rotation 0 0 1 -1.5707953071795862
+      name "(9)"
+      size 0.025 0.7 0.5
+    }
+    Wall {
+      translation -2.38139 -3.30654 -5.2591e-21
+      rotation 0 0 1 -1.5707953071795862
+      name "(8)"
+      size 0.025 0.7 0.5
+    }
+    Wall {
+      translation -3.50018 -3.46861 2.66453e-15
+      name "(7)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation 2.88 -1.93 0
+      name "(6)"
+      size 0.1 6.25 0.5
+    }
+    Wall {
+      translation -3.33 2.08 0
+      name "(6)(8)"
+      size 0.1 1.75 0.5
+    }
+    Wall {
+      translation -0.21 2.08 0
+      name "(6)(7)"
+      size 0.1 1.75 0.5
+    }
+    Wall {
+      translation 1 -3.45 0
+      name "(5)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -0.504039 -3.45427 1.42109e-14
+      name "(4)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -1.99593 -3.46784 1.06581e-14
+      name "(3)"
+      size 0.1 3 0.5
+    }
+    Wall {
+      translation -5 0 0
+      name "(2)"
+      size 0.1 10.1 0.5
+    }
+    Wall {
+      translation 5 0 0
+      name "(1)"
+      size 0.1 10.1 0.5
+    }
+    Wall {
+      translation 0 -5 0
+      name "3"
+      size 10 0.1 0.5
+    }
+    Wall {
+      translation 0 5 0
+      name "42"
+      size 10 0.1 0.5
+    }
+  ]
+}
