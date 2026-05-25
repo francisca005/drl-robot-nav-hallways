@@ -1,5 +1,12 @@
 import numpy as np
 
+# Feature dimensions for each variant.
+FEATURE_SET_DIMS = {
+    "full": 12,
+    "reduced": 8,
+    "directional": 5,
+}
+
 
 def normalize_lidar(lidar: np.ndarray) -> np.ndarray:
     """
@@ -51,53 +58,90 @@ def longest_free_gap(lidar_norm: np.ndarray, threshold: float = 0.55):
     return gap_center_norm, gap_width_norm
 
 
-def extract_lidar_features(lidar: np.ndarray, previous_action: int) -> np.ndarray:
+def extract_lidar_features(
+    lidar: np.ndarray,
+    previous_action: int,
+    feature_set: str = "full",
+) -> np.ndarray:
     """
     Converts raw 360-degree LiDAR readings into a compact feature vector.
 
-    Feature vector:
-    0. min_front
-    1. mean_front
-    2. left_clearance
-    3. right_clearance
-    4. clearance_asymmetry
-    5. max_gap_center
-    6. max_gap_width
-    7. rear_clearance
-    8. min_left
-    9. min_right
-    10. min_rear
-    11. previous_action normalized
+    feature_set options:
+        "full"        — 12 features (all, including redundant ones)
+        "reduced"     — 8 features (removes mean_front, clearance_asymmetry,
+                        rear_clearance, min_rear)
+        "directional" — 5 features (only decision-critical directional signals)
+
+    Full feature list (indices in "full"):
+        0  min_front            — closest obstacle ahead (safety signal)
+        1  mean_front           — average front distance [full only]
+        2  left_clearance       — mean lateral space on left
+        3  right_clearance      — mean lateral space on right
+        4  clearance_asymmetry  — right - left [full and directional]
+        5  max_gap_center       — direction of largest free corridor
+        6  max_gap_width        — width of largest free corridor
+        7  rear_clearance       — mean rear distance [full only]
+        8  min_left             — closest obstacle on left
+        9  min_right            — closest obstacle on right
+        10 min_rear             — closest obstacle behind [full only]
+        11 previous_action      — last action taken (normalized)
+
+    "reduced" keeps: min_front, left_clearance, right_clearance,
+                     max_gap_center, max_gap_width, min_left, min_right,
+                     previous_action
+    "directional" keeps: min_front, clearance_asymmetry, max_gap_center,
+                         max_gap_width, previous_action
     """
     lidar_norm = normalize_lidar(lidar)
 
-    # Same approximate sector logic used by the current reward function.
     left = lidar_norm[100:170]
     front = lidar_norm[170:190]
     right = lidar_norm[190:260]
-
-    # Rear sector: combine end and beginning of circular scan.
     rear = np.concatenate([lidar_norm[0:40], lidar_norm[320:360]])
 
-    min_front = np.min(front)
-    mean_front = np.mean(front)
-
-    left_clearance = np.mean(left)
-    right_clearance = np.mean(right)
-
+    min_front = float(np.min(front))
+    left_clearance = float(np.mean(left))
+    right_clearance = float(np.mean(right))
     clearance_asymmetry = right_clearance - left_clearance
-
     max_gap_center, max_gap_width = longest_free_gap(lidar_norm)
-
-    rear_clearance = np.mean(rear)
-
-    min_left = np.min(left)
-    min_right = np.min(right)
-    min_rear = np.min(rear)
-
     previous_action_norm = float(previous_action) / 5.0
 
-    features = np.array(
+    if feature_set == "directional":
+        return np.array(
+            [
+                min_front,
+                clearance_asymmetry,
+                max_gap_center,
+                max_gap_width,
+                previous_action_norm,
+            ],
+            dtype=np.float32,
+        )
+
+    min_left = float(np.min(left))
+    min_right = float(np.min(right))
+
+    if feature_set == "reduced":
+        return np.array(
+            [
+                min_front,
+                left_clearance,
+                right_clearance,
+                max_gap_center,
+                max_gap_width,
+                min_left,
+                min_right,
+                previous_action_norm,
+            ],
+            dtype=np.float32,
+        )
+
+    # "full": all 12 features
+    mean_front = float(np.mean(front))
+    rear_clearance = float(np.mean(rear))
+    min_rear = float(np.min(rear))
+
+    return np.array(
         [
             min_front,
             mean_front,
@@ -114,5 +158,3 @@ def extract_lidar_features(lidar: np.ndarray, previous_action: int) -> np.ndarra
         ],
         dtype=np.float32,
     )
-
-    return features
