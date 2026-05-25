@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+drl-robot-env/
+.env/
+.venv/
+
+# TensorBoard / logs
+logs/
+*.tfevents.*
+
+# Generated robot trajectories during runs
+data/positions/
+
+# Model checkpoints generated during training
+models/checkpoints
+models/checkpoints_features
+
+# Temporary files
+*.tmp
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Ignorar lixo de posições e trajetórias pesadas
+**/positions_test/
+**/positions_old_mixed/
+data/
+*.csv
+
