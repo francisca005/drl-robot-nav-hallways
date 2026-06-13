@@ -376,7 +376,7 @@ DEF End_Strip Robot {
       }
     }
   ]
-  name "robot(7)"
+  name "robot(8)"
   controller "end_strip_controller"
 }
 DEF End_Strip Robot {
@@ -403,7 +403,7 @@ DEF End_Strip Robot {
       }
     }
   ]
-  name "robot(8)"
+  name "robot(7)"
   controller "end_strip_controller"
 }
 DEF End_Strip Robot {

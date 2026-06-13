@@ -50,7 +50,7 @@ class RobotClient(Supervisor):
 
         # Minimum requirements before accepting an end-strip signal.
         self.min_steps_before_goal = 20
-        self.min_distance_from_start_for_goal = 2.0
+        self.min_distance_from_start_for_goal = 0.5
         self.max_steps_per_episode = 5_000
 
         # Special command sent by the Python environment when an episode ends by timeout.
@@ -223,7 +223,7 @@ class RobotClient(Supervisor):
         return np.array(self.socket.recv_pyobj(), dtype=np.float32)
 
     def send_observation(self, obs: RobotState) -> None:
-        """Send observation to the server."""
+        """Send observation to the server.""" 
         self.socket.send_pyobj(obs)
 
     def update_motors(self, action: np.ndarray) -> None:
