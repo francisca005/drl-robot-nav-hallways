@@ -23,9 +23,10 @@ SCRIPT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 POSITIONS = {
-    "E1 (CNN)":       PROJECT_ROOT / "results" / "e1_cnn"     / "positions_test" / "positions",
-    "E2-full (12f)":  PROJECT_ROOT / "results" / "e2_full"    / "positions_test",
-    "E2-reduced (8f)":PROJECT_ROOT / "results" / "e2_reduced" / "positions_test",
+    "E1 (CNN)":            PROJECT_ROOT / "results" / "e1_cnn"        / "positions_test" / "positions",
+    "E2-full (12f)":       PROJECT_ROOT / "results" / "e2_full"       / "positions_test",
+    "E2-reduced (8f)":     PROJECT_ROOT / "results" / "e2_reduced"    / "positions_test",
+    "E2-directional (5f)": PROJECT_ROOT / "results" / "e2_directional"/ "positions_test",
 }
 
 OUTPUT_DIR = PROJECT_ROOT / "results" / "comparison" / "trajectories"
@@ -112,34 +113,70 @@ def make_comparison_figure(
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # --- Robot 1: E1 falha, E2 melhora drasticamente ---
+    ALL_MODELS = ["E1 (CNN)", "E2-full (12f)", "E2-reduced (8f)", "E2-directional (5f)"]
+
+    # --- Robot 1: E1 falha (8%), E2 resolve em todas as variantes ---
     make_comparison_figure(
         robot_id=1,
-        models=["E1 (CNN)", "E2-full (12f)", "E2-reduced (8f)"],
-        success_rates={"E1 (CNN)": 8.2, "E2-full (12f)": 100.0, "E2-reduced (8f)": 100.0},
-        total_episodes={"E1 (CNN)": 49, "E2-full (12f)": 30, "E2-reduced (8f)": 30},
-        suptitle="Corredor 1 — E1 falha, E2 resolve (● início  × fim)",
+        models=ALL_MODELS,
+        success_rates={
+            "E1 (CNN)": 8.16, "E2-full (12f)": 100.0,
+            "E2-reduced (8f)": 100.0, "E2-directional (5f)": 100.0,
+        },
+        total_episodes={
+            "E1 (CNN)": 49, "E2-full (12f)": 29,
+            "E2-reduced (8f)": 29, "E2-directional (5f)": 29,
+        },
+        suptitle="Corredor 1 — E1 falha (8%), todas as variantes E2 resolvem (● início  × fim)",
         filename="robot1_comparison.png",
     )
 
-    # --- Robot 5: E2-reduced colapsa ---
+    # --- Robot 4: corredor difícil, todos falham ---
     make_comparison_figure(
-        robot_id=5,
-        models=["E1 (CNN)", "E2-full (12f)", "E2-reduced (8f)"],
-        success_rates={"E1 (CNN)": 100.0, "E2-full (12f)": 100.0, "E2-reduced (8f)": 18.8},
-        total_episodes={"E1 (CNN)": 25, "E2-full (12f)": 17, "E2-reduced (8f)": 16},
-        suptitle="Corredor 5 — E2-reduced colapsa (● início  × fim)",
-        filename="robot5_comparison.png",
+        robot_id=4,
+        models=ALL_MODELS,
+        success_rates={
+            "E1 (CNN)": 17.95, "E2-full (12f)": 0.0,
+            "E2-reduced (8f)": 0.0, "E2-directional (5f)": 0.0,
+        },
+        total_episodes={
+            "E1 (CNN)": 39, "E2-full (12f)": 13,
+            "E2-reduced (8f)": 43, "E2-directional (5f)": 28,
+        },
+        suptitle="Corredor 4 — corredor difícil, todos os modelos falham (● início  × fim)",
+        filename="robot4_comparison.png",
     )
 
-    # --- Robot 7: E2-full timeout, E2-reduced resolve ---
+    # --- Robot 7: E2-reduced instável (60%), outros resolvem ---
     make_comparison_figure(
         robot_id=7,
-        models=["E1 (CNN)", "E2-full (12f)", "E2-reduced (8f)"],
-        success_rates={"E1 (CNN)": 100.0, "E2-full (12f)": 0.0, "E2-reduced (8f)": 100.0},
-        total_episodes={"E1 (CNN)": 30, "E2-full (12f)": 12, "E2-reduced (8f)": 15},
-        suptitle="Corredor 7 — E2-full fica preso, E2-reduced navega (● início  × fim)",
+        models=ALL_MODELS,
+        success_rates={
+            "E1 (CNN)": 100.0, "E2-full (12f)": 100.0,
+            "E2-reduced (8f)": 60.0, "E2-directional (5f)": 100.0,
+        },
+        total_episodes={
+            "E1 (CNN)": 30, "E2-full (12f)": 16,
+            "E2-reduced (8f)": 15, "E2-directional (5f)": 16,
+        },
+        suptitle="Corredor 7 — E2-reduced instável (60%), outros navegam (● início  × fim)",
         filename="robot7_comparison.png",
+    )
+
+    # --- Robot 8: bug corrigido, todos resolvem excepto antes da correção ---
+    make_comparison_figure(
+        robot_id=8,
+        models=ALL_MODELS,
+        success_rates={
+            "E1 (CNN)": 100.0, "E2-full (12f)": 100.0,
+            "E2-reduced (8f)": 100.0, "E2-directional (5f)": 100.0,
+        },
+        total_episodes={
+            "E1 (CNN)": 27, "E2-full (12f)": 17,
+            "E2-reduced (8f)": 17, "E2-directional (5f)": 17,
+        },
+        suptitle="Corredor 8 — todos resolvem após correção do bug (● início  × fim)",
+        filename="robot8_comparison.png",
     )
 
     print(f"\nAll trajectory plots saved to {OUTPUT_DIR}")

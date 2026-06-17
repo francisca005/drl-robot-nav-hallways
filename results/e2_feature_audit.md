@@ -107,75 +107,101 @@ Mantém apenas as features de decisão direcional:
 
 ---
 
-## 4. Resultados — E1 vs E2-full vs E2-reduced
+## 4. Resultados Finais — E1 vs E2 (todas as variantes)
+
+> Resultados obtidos após correcção do bug `min_distance_from_start_for_goal` (2.0 → 0.5)  
+> e re-treino completo das 3 variantes E2 com 3 000 000 timesteps cada.
 
 ### Comparação de success rate por corredor
 
-| Robot | E1 success% | E2-full success% | E2-reduced success% | Observação |
-|-------|-------------|------------------|---------------------|------------|
-| 0 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
-| 1 | **8.2** | **100.0** | **100.0** | E2 melhora drasticamente; CNN falha |
-| 2 | 100.0 | 100.0 | 92.9 | Ligeira regressão no reduced |
-| 3 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
-| 4 | **18.0** | **0.0** | **0.0** | Corredor difícil para todos |
-| 5 | 100.0 | 100.0 | **6.2** | **E2-reduced colapsa (93.8% colisão)** |
-| 6 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
-| 7 | 100.0 | **0.0** | **100.0** | E2-full falha; reduced recupera |
-| 8 | 100.0 | **0.0** | **0.0** | E2 falha em ambas as variantes |
-| **Média** | **80.7%** | **77.8%** | **77.7%** | Features ≈ CNN em média |
+| Robot | E1 (CNN) | E2-full (12f) | E2-reduced (8f) | E2-directional (5f) | Observação |
+|-------|----------|---------------|-----------------|---------------------|------------|
+| 0 | 100.0 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
+| 1 | **8.2** | **100.0** | **100.0** | **100.0** | E2 resolve; CNN falha |
+| 2 | 100.0 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
+| 3 | 100.0 | 100.0 | 100.0 | 100.0 | Todos perfeitos |
+| 4 | 18.0 | **0.0** | **0.0** | **0.0** | Corredor difícil — todos falham |
+| 5 | 100.0 | 100.0 | **0.0** | 100.0 | **E2-reduced colapsa (100% colisão)** |
+| 6 | 100.0 | 100.0 | 100.0 | **0.0** | **E2-directional falha (100% timeout)** |
+| 7 | 100.0 | 100.0 | **60.0** | 100.0 | **E2-reduced instável (40% colisão)** |
+| 8 | 100.0 | 100.0 | 100.0 | 100.0 | Todos resolvem após correcção do bug |
+| **Média** | **80.7%** | **88.9%** | **73.3%** | **77.8%** | E2-full é a melhor variante |
 
-*Fonte: `success_rates_e1.csv`, `results/e2_full/evaluation/metrics.csv`, `results/e2_reduced/evaluation/metrics.csv`*
+### Convergência durante o treino
 
-### Métricas detalhadas por corredor — E2-full
+| Variante | 1ª vez 100% | Success rate final | Tempo treino |
+|----------|-------------|-------------------|--------------|
+| E2-full (12f) | ~2.1M steps | **100%** | ~3.2h |
+| E2-reduced (8f) | nunca | 88% | ~3.1h |
+| E2-directional (5f) | ~2.1M steps | **100%** | ~3.1h |
 
-| Robot | Episodes | Success% | Collision% | Timeout% | Mean ep. length |
-|-------|----------|----------|------------|----------|-----------------|
-| 0 | 30 | 100.0 | 0.0 | 0.0 | 1961 |
-| 1 | 30 | 100.0 | 0.0 | 0.0 | 1988 |
-| 2 | 29 | 100.0 | 0.0 | 0.0 | 2056 |
-| 3 | 29 | 100.0 | 0.0 | 0.0 | 2058 |
-| 4 | 16 | 0.0 | **56.3** | 43.8 | 3541 |
-| 5 | 17 | 100.0 | 0.0 | 0.0 | 3366 |
-| 6 | 16 | 100.0 | 0.0 | 0.0 | 3674 |
-| 7 | 12 | 0.0 | 0.0 | **100.0** | 5000 |
-| 8 | 12 | 0.0 | 0.0 | **100.0** | 5000 |
-
-### Métricas detalhadas por corredor — E2-reduced
+### Métricas detalhadas — E2-full (12f)
 
 | Robot | Episodes | Success% | Collision% | Timeout% | Mean ep. length |
 |-------|----------|----------|------------|----------|-----------------|
-| 0 | 30 | 100.0 | 0.0 | 0.0 | 1984 |
-| 1 | 30 | 100.0 | 0.0 | 0.0 | 1989 |
-| 2 | 28 | 92.9 | 7.1 | 0.0 | 2106 |
-| 3 | 28 | 100.0 | 0.0 | 0.0 | 2082 |
-| 4 | 12 | 0.0 | 8.3 | **91.7** | 4943 |
-| 5 | 16 | 6.2 | **93.8** | 0.0 | 3641 |
+| 0 | 30 | 100.0 | 0.0 | 0.0 | 1964 |
+| 1 | 29 | 100.0 | 0.0 | 0.0 | 2020 |
+| 2 | 29 | 100.0 | 0.0 | 0.0 | 2015 |
+| 3 | 29 | 100.0 | 0.0 | 0.0 | 2018 |
+| 4 | 13 | 0.0 | **84.6** | 15.4 | 4523 |
+| 5 | 17 | 100.0 | 0.0 | 0.0 | 3336 |
 | 6 | 16 | 100.0 | 0.0 | 0.0 | 3674 |
-| 7 | 15 | 100.0 | 0.0 | 0.0 | 3768 |
-| 8 | 12 | 0.0 | 0.0 | **100.0** | 5000 |
+| 7 | 16 | 100.0 | 0.0 | 0.0 | 3609 |
+| 8 | 17 | 100.0 | 0.0 | 0.0 | 3419 |
+
+### Métricas detalhadas — E2-reduced (8f)
+
+| Robot | Episodes | Success% | Collision% | Timeout% | Mean ep. length |
+|-------|----------|----------|------------|----------|-----------------|
+| 0 | 29 | 100.0 | 0.0 | 0.0 | 2037 |
+| 1 | 29 | 100.0 | 0.0 | 0.0 | 2004 |
+| 2 | 26 | 100.0 | 0.0 | 0.0 | 2240 |
+| 3 | 29 | 100.0 | 0.0 | 0.0 | 2050 |
+| 4 | 43 | 0.0 | **100.0** | 0.0 | 1368 |
+| 5 | 16 | 0.0 | **100.0** | 0.0 | 3589 |
+| 6 | 16 | 100.0 | 0.0 | 0.0 | 3691 |
+| 7 | 15 | 60.0 | **40.0** | 0.0 | 3852 |
+| 8 | 17 | 100.0 | 0.0 | 0.0 | 3374 |
+
+### Métricas detalhadas — E2-directional (5f)
+
+| Robot | Episodes | Success% | Collision% | Timeout% | Mean ep. length |
+|-------|----------|----------|------------|----------|-----------------|
+| 0 | 30 | 100.0 | 0.0 | 0.0 | 1967 |
+| 1 | 29 | 100.0 | 0.0 | 0.0 | 2023 |
+| 2 | 29 | 100.0 | 0.0 | 0.0 | 2019 |
+| 3 | 29 | 100.0 | 0.0 | 0.0 | 2016 |
+| 4 | 28 | 0.0 | **85.7** | 14.3 | 2101 |
+| 5 | 18 | 100.0 | 0.0 | 0.0 | 3312 |
+| 6 | 12 | 0.0 | 0.0 | **100.0** | 5000 |
+| 7 | 16 | 100.0 | 0.0 | 0.0 | 3583 |
+| 8 | 17 | 100.0 | 0.0 | 0.0 | 3407 |
 
 ### Casos de interesse para análise qualitativa
 
-**Robot 1 — E2 melhora muito (+91.8% vs E1)**  
-E1 falha quase sempre (8.2%). Ambas as variantes E2 atingem 100%. Hipótese: a geometria do corredor 1 tem uma assimetria lateral clara que `left_clearance`/`right_clearance` captam explicitamente; o CNN não aprende esta distinção de forma consistente.
+**Robot 1 — E2 resolve onde E1 falha (+91.8%)**  
+E1: 8.2%. Todas as variantes E2 atingem 100%. A geometria do corredor 1 tem uma assimetria lateral que `left_clearance`/`right_clearance` captam explicitamente; a CNN não aprende esta distinção de forma consistente.
 
-**Robot 4 — caso difícil para todos os modelos**  
-E1: 18%, E2-full: 0% (56% colisão), E2-reduced: 0% (92% timeout). Geometria provavelmente muito exigente (curva apertada ou largura reduzida). Nenhuma representação resolve bem.
+**Robot 4 — corredor difícil para todos os modelos**  
+E1: 18% (único com algum sucesso). E2-full: 0% (84.6% colisão). E2-reduced: 0% (100% colisão). E2-directional: 0% (85.7% colisão). Geometria muito exigente; nenhuma representação resolve.
 
-**Robot 5 — colapso no E2-reduced (100% → 6.2%)**  
-E1 e E2-full navigam com 100%. E2-reduced tem 93.8% de colisão. A `clearance_asymmetry` foi removida no reduced; sem ela, o agente perde o sinal direcional crítico para a geometria deste corredor.
+**Robot 5 — colapso exclusivo no E2-reduced**  
+E1, E2-full e E2-directional: 100%. E2-reduced: 0% (100% colisão). A remoção de `clearance_asymmetry` elimina o sinal direcional crítico para este corredor. O E2-directional inclui `clearance_asymmetry` e navega sem problemas — confirma que esta feature é essencial aqui.
 
-**Robot 7 — inversão entre E2-full e E2-reduced**  
-E1: 100%. E2-full: 0% timeout (robot oscila sem sair). E2-reduced: 100%. A `clearance_asymmetry` no E2-full cria um sinal ambíguo neste corredor simétrico; sem ela (reduced), o agente decide com `min_left`/`min_right` directamente e navega com sucesso.
+**Robot 6 — falha exclusiva no E2-directional**  
+E1, E2-full e E2-reduced: 100%. E2-directional: 0% (100% timeout). O directional não tem `min_left`/`min_right` separados — perde informação de proximidade lateral que é necessária neste corredor.
 
-**Robot 8 — falha estrutural de features**  
-E1: 100%. E2-full e E2-reduced: 0% timeout. A representação por features parece insuficiente para a geometria deste corredor em ambas as variantes; o CNN aprende algo que as features não codificam.
+**Robot 7 — E2-reduced instável**  
+E1, E2-full e E2-directional: 100%. E2-reduced: 60% (40% colisão). Sem `clearance_asymmetry`, o agente falha intermitentemente neste corredor.
+
+**Robot 8 — resolvido após correcção do bug**  
+Resultados anteriores (0% timeout em E2-full e E2-reduced) deviam-se a um bug na condição de sucesso (`min_distance_from_start_for_goal = 2.0`): a faixa verde fica geometricamente perto da posição inicial, tornando impossível satisfazer a condição. Após correcção para 0.5, todas as variantes atingem 100%.
 
 ---
 
-## 5. Protocolo de Re-treino
+## 5. Protocolo de Re-treino (concluído)
 
-O re-treino de E2 deve usar exactamente o mesmo protocolo que E1 corrigido:
+Re-treino efectuado com o código corrigido (`min_distance_from_start_for_goal = 0.5`):
 
 ```
 PPO, MlpPolicy
@@ -183,51 +209,29 @@ PPO, MlpPolicy
 3 000 000 timesteps
 step limit: 5000 por episódio
 timeout penalty: −10 se truncated e não terminated
-success: goal_reached == True (End_Strip)
+success: goal_reached == True (End_Strip) AND steps ≥ 20 AND dist_from_start ≥ 0.5
 collision: bumper triggered
 ```
 
-### Comandos de treino
-
 ```bash
-# E2-full (versão actual, re-treino limpo)
 python src/rl-server-features.py --feature-set full --new
-
-# E2-reduced (versão sem redundâncias)
 python src/rl-server-features.py --feature-set reduced --new
-
-# E2-directional (versão mínima)
 python src/rl-server-features.py --feature-set directional --new
-```
 
-### Comandos de avaliação
-
-```bash
 python src/rl-test-features.py --feature-set full
 python src/rl-test-features.py --feature-set reduced
 python src/rl-test-features.py --feature-set directional
 ```
 
-Resultados guardados em `results/e2_{variant}/evaluation/metrics.csv` com colunas:  
-`robot_id, episodes, successes, collisions, timeouts, success_rate, collision_rate, timeout_rate, mean_episode_length`
-
 ---
 
-## 6. Comparação Global
+## 6. Comparação Final
 
-| Modelo | Global success% | Collision% (média) | Timeout% (média) | Mean ep. length (média) |
-|--------|----------------|--------------------|------------------|-------------------------|
-| E1 (CNN, CnnPolicy) | **80.7%** | — | — | — |
-| E2-full (12 features, MlpPolicy) | 77.8% | 6.3% | 27.1% | 3182 |
-| E2-reduced (8 features, MlpPolicy) | 77.7% | 12.8% | 21.3% | 3243 |
+| Modelo | Mean success% | Mean collision% | Mean timeout% | Mean ep. length |
+|--------|--------------|-----------------|---------------|-----------------|
+| E1 (CNN) | 80.7% | — | — | — |
+| E2-full (12f) | **88.9%** | 9.4% | 1.7% | 3064 |
+| E2-reduced (8f) | 73.3% | 26.7% | 0.0% | 2912 |
+| E2-directional (5f) | 77.8% | 9.5% | 12.7% | 2825 |
 
-*E1: só success% disponível (`success_rates_e1.csv`). Collision%/Timeout% não foram registados no script original.*  
-*Médias calculadas como média simples das 9 corridors.*
-
-### Interpretação
-
-- As três abordagens têm performance global semelhante (~78–81%), mas com **distribuições de falha distintas**.
-- E2-full melhora drasticamente o corredor 1 (+91.8% vs E1) mas cria falhas novas nos corredores 7 e 8.
-- E2-reduced resolve o problema do corredor 7 mas colapsa no corredor 5.
-- O CNN (E1) é o mais robusto transversalmente, mas falha especificamente no corredor 1.
-- Nenhum modelo resolve o corredor 4; nenhuma feature set (nem o CNN) domina em todos os corredores.
+**Conclusão:** O E2-full (12 features) é a melhor variante, superando o E1 (CNN) em 8.2 p.p. de média global. A hipótese de que remover redundâncias melhoraria o desempenho não se confirmou — o E2-reduced é a pior variante. O E2-directional com apenas 5 features é surpreendentemente competitivo mas falha num corredor específico (robot 6) por falta de informação lateral detalhada.

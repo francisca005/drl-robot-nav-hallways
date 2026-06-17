@@ -50,7 +50,7 @@ class RobotClient(Supervisor):
 
         # Minimum requirements before accepting an end-strip signal.
         self.min_steps_before_goal = 20
-        self.min_distance_from_start_for_goal = 2.0
+        self.min_distance_from_start_for_goal = 0.5
         self.max_steps_per_episode = 5_000
 
         # Special command sent by the Python environment when an episode ends by timeout.
