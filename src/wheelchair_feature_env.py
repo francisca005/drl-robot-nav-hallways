@@ -3,8 +3,8 @@ from typing import Tuple
 import numpy as np
 from gymnasium.spaces import Box
 
-from feature_engineering import extract_lidar_features
 from wheelchair_env import WheelchairEnv
+from feature_engineering import FEATURE_SET_DIMS, extract_lidar_features
 
 
 class WheelchairFeatureEnv(WheelchairEnv):
@@ -18,13 +18,24 @@ class WheelchairFeatureEnv(WheelchairEnv):
     - same termination conditions.
 
     It changes only:
-    - observation representation: 360 LiDAR + previous action -> 12 handcrafted features.
+    - observation representation: 360 LiDAR + previous action -> compact features.
+
+    Args:
+        env_id: robot index (0-8), passed to WheelchairEnv.
+        feature_set: one of "full" (12), "reduced" (8), "directional" (5).
     """
 
-    def __init__(self, env_id: int):
-        # Important: this must be defined before super().__init__(),
-        # because WheelchairEnv.__init__() calls self.no_obs().
-        self.feature_dim = 12
+    def __init__(self, env_id: int, feature_set: str = "full"):
+        if feature_set not in FEATURE_SET_DIMS:
+            raise ValueError(
+                f"Unknown feature_set '{feature_set}'. "
+                f"Choose from: {list(FEATURE_SET_DIMS)}"
+            )
+
+        self.feature_set = feature_set
+        # Must be set before super().__init__() because WheelchairEnv.__init__
+        # calls self.no_obs(), which needs feature_dim.
+        self.feature_dim = FEATURE_SET_DIMS[feature_set]
 
         super().__init__(env_id)
 
@@ -45,8 +56,7 @@ class WheelchairFeatureEnv(WheelchairEnv):
         self.time_step = 0
         self.reset_preference()
 
-        features = extract_lidar_features(self.prev_lidar, self.prev_action)
-
+        features = extract_lidar_features(self.prev_lidar, self.prev_action, self.feature_set)
         return features, {}
 
     def step(self, action: int):
@@ -54,6 +64,7 @@ class WheelchairFeatureEnv(WheelchairEnv):
 
         action_values = self.to_action(action)
 
+        # Reward is computed using raw LiDAR, exactly as in the baseline.
         reward = self.get_reward(self.prev_lidar, action_values)
 
         obs = self.send_action_get_obs(action_values)
@@ -72,13 +83,12 @@ class WheelchairFeatureEnv(WheelchairEnv):
         if truncated and not terminated:
             reward -= 10
 
-
         info = {
-            "is_success": obs.goal_reached if not truncated else False,
-            "collision": obs.collided if not truncated else False,
+            "is_success": obs.goal_reached,
+            "collision": obs.collided,
             "timeout": truncated and not terminated,
         }
 
-        features = extract_lidar_features(obs.lidar, self.prev_action)
+        features = extract_lidar_features(obs.lidar, self.prev_action, self.feature_set)
 
         return features, reward, terminated, truncated, info
